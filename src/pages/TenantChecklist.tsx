@@ -40,7 +40,7 @@ const TenantChecklist = () => {
 
   if (!station) {
     return (
-      <div className="min-h-screen bg-background flex items-center justify-center">
+      <div className="flex items-center justify-center h-full">
         <p className="text-muted-foreground">Stasiun tidak ditemukan</p>
       </div>
     );
@@ -77,44 +77,41 @@ const TenantChecklist = () => {
   const progress = getProgress();
 
   return (
-    <div className="min-h-screen bg-background">
-      {/* Header */}
-      <header className="bg-primary text-primary-foreground sticky top-0 z-10">
-        <div className="container max-w-3xl py-4">
-          <div className="flex items-center gap-3">
-            <button
-              onClick={() => navigate("/")}
-              className="p-1.5 rounded-md hover:bg-primary-foreground/10 transition-colors"
-            >
-              <ArrowLeft className="h-5 w-5" />
-            </button>
-            <div className="flex-1 min-w-0">
-              <h1 className="font-bold text-lg truncate">{station.name}</h1>
-              <p className="text-xs text-primary-foreground/60">
-                {new Date().toLocaleDateString("id-ID", {
-                  weekday: "long",
-                  year: "numeric",
-                  month: "long",
-                  day: "numeric",
-                })}
-              </p>
-            </div>
-            <div className="flex items-center gap-2">
-              <ClipboardCheck className="h-4 w-4" />
-              <span className="text-sm font-semibold">{progress}%</span>
-            </div>
-          </div>
-          {/* Progress bar */}
-          <div className="mt-3 h-1.5 rounded-full bg-primary-foreground/20 overflow-hidden">
-            <div
-              className="h-full bg-accent rounded-full transition-all duration-500"
-              style={{ width: `${progress}%` }}
-            />
-          </div>
+    <div className="p-6">
+      {/* Sub header */}
+      <div className="flex items-center gap-3 mb-6">
+        <button
+          onClick={() => navigate("/")}
+          className="p-2 rounded-lg hover:bg-muted transition-colors"
+        >
+          <ArrowLeft className="h-4 w-4 text-muted-foreground" />
+        </button>
+        <div className="flex-1 min-w-0">
+          <h2 className="font-bold text-base text-card-foreground truncate">{station.name}</h2>
+          <p className="text-xs text-muted-foreground">
+            {new Date().toLocaleDateString("id-ID", {
+              weekday: "long",
+              year: "numeric",
+              month: "long",
+              day: "numeric",
+            })}
+          </p>
         </div>
-      </header>
+        <div className="flex items-center gap-2 bg-muted rounded-lg px-3 py-1.5">
+          <ClipboardCheck className="h-4 w-4 text-primary" />
+          <span className="text-sm font-semibold text-card-foreground">{progress}%</span>
+        </div>
+      </div>
 
-      <div className="container max-w-3xl py-6 space-y-4">
+      {/* Progress bar */}
+      <div className="h-1.5 rounded-full bg-muted overflow-hidden mb-6 max-w-3xl">
+        <div
+          className="h-full bg-accent rounded-full transition-all duration-500"
+          style={{ width: `${progress}%` }}
+        />
+      </div>
+
+      <div className="space-y-4 max-w-3xl">
         {tenants.map((tenant, idx) => (
           <div
             key={tenant.id}
