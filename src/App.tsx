@@ -2,10 +2,12 @@ import { Toaster } from "@/components/ui/toaster";
 import { Toaster as Sonner } from "@/components/ui/sonner";
 import { TooltipProvider } from "@/components/ui/tooltip";
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
-import { BrowserRouter, Routes, Route } from "react-router-dom";
+import { BrowserRouter, Routes, Route, Navigate } from "react-router-dom";
 import AppLayout from "./components/AppLayout";
 import StationSelect from "./pages/StationSelect";
 import TenantChecklist from "./pages/TenantChecklist";
+import FormPatrol from "./pages/FormPatrol";
+import Logbook from "./pages/Logbook";
 import NotFound from "./pages/NotFound";
 
 const queryClient = new QueryClient();
@@ -18,7 +20,11 @@ const App = () => (
       <BrowserRouter>
         <AppLayout>
           <Routes>
-            <Route path="/" element={<StationSelect />} />
+            <Route path="/" element={<Navigate to="/daily-check/tenant" replace />} />
+            <Route path="/daily-check" element={<Navigate to="/daily-check/tenant" replace />} />
+            <Route path="/daily-check/tenant" element={<StationSelect />} />
+            <Route path="/daily-check/patrol" element={<FormPatrol />} />
+            <Route path="/daily-check/logbook" element={<Logbook />} />
             <Route path="/station/:stationId" element={<TenantChecklist />} />
             <Route path="*" element={<NotFound />} />
           </Routes>
