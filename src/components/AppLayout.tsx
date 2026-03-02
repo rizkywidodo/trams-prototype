@@ -1,4 +1,5 @@
 import { NavLink, useLocation } from "react-router-dom";
+import { useState } from "react";
 import {
   LayoutDashboard,
   ClipboardCheck,
@@ -11,11 +12,21 @@ import {
   Search,
   Bell,
   ChevronDown,
+  ChevronRight,
+  Shield,
+  BookOpen,
+  Store,
 } from "lucide-react";
+
+const DAILY_CHECK_ITEMS = [
+  { to: "/daily-check/patrol", label: "Form Patrol", icon: Shield },
+  { to: "/daily-check/logbook", label: "Logbook", icon: BookOpen },
+  { to: "/daily-check/tenant", label: "Daily Check Tenant", icon: Store },
+];
 
 const NAV_ITEMS = [
   { to: "/dashboard", label: "Dashboard", icon: LayoutDashboard, disabled: true },
-  { to: "/", label: "Daily Check", icon: ClipboardCheck },
+  { to: "/daily-check", label: "Daily Check", icon: ClipboardCheck, expandable: true },
   { to: "/scheduling", label: "Scheduling", icon: CalendarCheck, disabled: true },
   { to: "/evaluation", label: "Evaluation", icon: FileText, disabled: true },
   { to: "/broadcast", label: "Broadcast", icon: Megaphone, disabled: true },
@@ -25,9 +36,14 @@ const NAV_ITEMS = [
 
 const AppLayout = ({ children }: { children: React.ReactNode }) => {
   const location = useLocation();
+  const isDailyCheckActive = location.pathname.startsWith("/daily-check") || location.pathname === "/" || location.pathname.startsWith("/station/");
+  const [dailyCheckOpen, setDailyCheckOpen] = useState(isDailyCheckActive);
 
   const getPageTitle = () => {
-    if (location.pathname.startsWith("/station/")) return "Tenant Checklist";
+    if (location.pathname.startsWith("/daily-check/patrol")) return "Form Patrol";
+    if (location.pathname.startsWith("/daily-check/logbook")) return "Logbook";
+    if (location.pathname.startsWith("/station/")) return "Daily Check Tenant";
+    if (location.pathname.startsWith("/daily-check/tenant") || location.pathname === "/") return "Daily Check Tenant";
     return "Daily Check";
   };
 
@@ -52,11 +68,8 @@ const AppLayout = ({ children }: { children: React.ReactNode }) => {
         <nav className="flex-1 py-3 px-3 space-y-0.5 overflow-y-auto">
           {NAV_ITEMS.map((item) => {
             const Icon = item.icon;
-            const isActive =
-              item.to === "/"
-                ? location.pathname === "/" || location.pathname.startsWith("/station/")
-                : location.pathname.startsWith(item.to);
 
+            // Disabled items
             if (item.disabled) {
               return (
                 <div
@@ -69,6 +82,62 @@ const AppLayout = ({ children }: { children: React.ReactNode }) => {
               );
             }
 
+            // Expandable Daily Check
+            if (item.expandable) {
+              return (
+                <div key={item.to}>
+                  <button
+                    onClick={() => setDailyCheckOpen(!dailyCheckOpen)}
+                    className={`flex items-center gap-3 px-3 py-2.5 rounded-lg text-sm font-medium transition-colors w-full ${
+                      isDailyCheckActive
+                        ? "bg-primary text-primary-foreground shadow-sm"
+                        : "text-muted-foreground hover:bg-muted hover:text-card-foreground"
+                    }`}
+                  >
+                    <Icon className="h-[18px] w-[18px]" />
+                    <span className="flex-1 text-left">{item.label}</span>
+                    {dailyCheckOpen ? (
+                      <ChevronDown className="h-3.5 w-3.5 opacity-70" />
+                    ) : (
+                      <ChevronRight className="h-3.5 w-3.5 opacity-70" />
+                    )}
+                  </button>
+
+                  {/* Sub items */}
+                  {dailyCheckOpen && (
+                    <div className="mt-0.5 ml-4 pl-3 border-l-2 border-border space-y-0.5">
+                      {DAILY_CHECK_ITEMS.map((sub) => {
+                        const SubIcon = sub.icon;
+                        const isSubActive =
+                          sub.to === "/daily-check/tenant"
+                            ? location.pathname === "/daily-check/tenant" ||
+                              location.pathname === "/" ||
+                              location.pathname.startsWith("/station/")
+                            : location.pathname.startsWith(sub.to);
+
+                        return (
+                          <NavLink
+                            key={sub.to}
+                            to={sub.to}
+                            className={`flex items-center gap-2.5 px-3 py-2 rounded-md text-[13px] font-medium transition-colors ${
+                              isSubActive
+                                ? "bg-accent/15 text-accent"
+                                : "text-muted-foreground hover:bg-muted hover:text-card-foreground"
+                            }`}
+                          >
+                            <SubIcon className="h-[15px] w-[15px]" />
+                            <span>{sub.label}</span>
+                          </NavLink>
+                        );
+                      })}
+                    </div>
+                  )}
+                </div>
+              );
+            }
+
+            // Normal items
+            const isActive = location.pathname.startsWith(item.to);
             return (
               <NavLink
                 key={item.to}
@@ -102,7 +171,6 @@ const AppLayout = ({ children }: { children: React.ReactNode }) => {
           <h1 className="text-lg font-bold text-card-foreground">{getPageTitle()}</h1>
 
           <div className="flex items-center gap-4">
-            {/* Search */}
             <div className="relative hidden md:block">
               <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
               <input
@@ -112,13 +180,11 @@ const AppLayout = ({ children }: { children: React.ReactNode }) => {
               />
             </div>
 
-            {/* Notification */}
             <button className="relative p-2 rounded-lg hover:bg-muted transition-colors">
               <Bell className="h-5 w-5 text-muted-foreground" />
               <span className="absolute top-1.5 right-1.5 h-2 w-2 rounded-full bg-destructive" />
             </button>
 
-            {/* User */}
             <button className="flex items-center gap-2.5 hover:bg-muted rounded-lg px-2 py-1.5 transition-colors">
               <div className="h-8 w-8 rounded-full bg-primary/10 flex items-center justify-center">
                 <span className="text-xs font-bold text-primary">A</span>
