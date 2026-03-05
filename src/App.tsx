@@ -8,6 +8,7 @@ import StationSelect from "./pages/StationSelect";
 import TenantChecklist from "./pages/TenantChecklist";
 import FormPatrol from "./pages/FormPatrol";
 import Logbook from "./pages/Logbook";
+import Scheduling from "./pages/Scheduling";
 import NotFound from "./pages/NotFound";
 
 const queryClient = new QueryClient();
@@ -26,6 +27,7 @@ const App = () => (
             <Route path="/daily-check/patrol" element={<FormPatrol />} />
             <Route path="/daily-check/logbook" element={<Logbook />} />
             <Route path="/station/:stationId" element={<TenantChecklist />} />
+            <Route path="/scheduling" element={<Scheduling />} />
             <Route path="*" element={<NotFound />} />
           </Routes>
         </AppLayout>
