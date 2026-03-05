@@ -1,4 +1,5 @@
 import { useState } from "react";
+import { useNavigate } from "react-router-dom";
 import { ChevronDown, ChevronRight, Check } from "lucide-react";
 import { STATIONS } from "@/data/stations";
 import {
@@ -8,7 +9,7 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select";
-import { toast } from "sonner";
+
 
 interface PatrolCategory {
   id: string;
@@ -93,6 +94,7 @@ type CheckValue = "ok" | "no" | null;
 type PatrolChecks = Record<string, Record<string, CheckValue[]>>;
 
 const FormPatrol = () => {
+  const navigate = useNavigate();
   const [selectedStation, setSelectedStation] = useState<string>(STATIONS[0].id);
   const [expandedCategories, setExpandedCategories] = useState<Record<string, boolean>>({
     keselamatan: true,
@@ -121,9 +123,7 @@ const FormPatrol = () => {
   };
 
   const handleSubmit = () => {
-    toast.success("Form Patrol berhasil disimpan!", {
-      description: `Stasiun ${STATIONS.find((s) => s.id === selectedStation)?.name}`,
-    });
+    navigate(`/daily-check/patrol/submitted?station=${selectedStation}`);
   };
 
   return (
