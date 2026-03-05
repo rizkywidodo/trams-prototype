@@ -7,6 +7,7 @@ import AppLayout from "./components/AppLayout";
 import StationSelect from "./pages/StationSelect";
 import TenantChecklist from "./pages/TenantChecklist";
 import FormPatrol from "./pages/FormPatrol";
+import PatrolSubmitted from "./pages/PatrolSubmitted";
 import Logbook from "./pages/Logbook";
 import Scheduling from "./pages/Scheduling";
 import NotFound from "./pages/NotFound";
@@ -25,6 +26,7 @@ const App = () => (
             <Route path="/daily-check" element={<Navigate to="/daily-check/tenant" replace />} />
             <Route path="/daily-check/tenant" element={<StationSelect />} />
             <Route path="/daily-check/patrol" element={<FormPatrol />} />
+            <Route path="/daily-check/patrol/submitted" element={<PatrolSubmitted />} />
             <Route path="/daily-check/logbook" element={<Logbook />} />
             <Route path="/station/:stationId" element={<TenantChecklist />} />
             <Route path="/scheduling" element={<Scheduling />} />
