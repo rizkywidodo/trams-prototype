@@ -31,7 +31,7 @@ const NAV_ITEMS = [
   { to: "/evaluation", label: "Evaluation", icon: FileText, disabled: true },
   { to: "/broadcast", label: "Broadcast", icon: Megaphone, disabled: true },
   { to: "/training", label: "Training & Simulation", icon: GraduationCap, disabled: true },
-  { to: "/master-data", label: "Master Data", icon: Settings, disabled: true },
+  { to: "/master-data", label: "Master Data", icon: Settings },
 ];
 
 const AppLayout = ({ children }: { children: React.ReactNode }) => {
