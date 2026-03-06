@@ -44,7 +44,10 @@ const AppLayout = ({ children }: { children: React.ReactNode }) => {
     if (location.pathname.startsWith("/daily-check/logbook")) return "Logbook";
     if (location.pathname.startsWith("/station/")) return "Daily Check Tenant";
     if (location.pathname.startsWith("/daily-check/tenant") || location.pathname === "/") return "Daily Check Tenant";
-    return "Daily Check";
+    if (location.pathname === "/master-data/tenants/create") return "Tenant Creation";
+    if (location.pathname.startsWith("/master-data")) return "Master Data";
+    if (location.pathname.startsWith("/scheduling")) return "Scheduling";
+    return "TRAMS";
   };
 
   return (
