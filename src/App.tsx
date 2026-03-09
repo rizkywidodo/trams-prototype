@@ -36,6 +36,7 @@ const App = () => (
             <Route path="/master-data" element={<Navigate to="/master-data/tenants" replace />} />
             <Route path="/master-data/tenants" element={<TenantList />} />
             <Route path="/master-data/tenants/create" element={<TenantCreation />} />
+            <Route path="/sign-in" element={<SignIn />} />
             <Route path="*" element={<NotFound />} />
           </Routes>
         </AppLayout>
