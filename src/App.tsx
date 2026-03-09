@@ -13,6 +13,7 @@ import Scheduling from "./pages/Scheduling";
 import TenantList from "./pages/TenantList";
 import TenantCreation from "./pages/TenantCreation";
 import NotFound from "./pages/NotFound";
+import SignIn from "./pages/SignIn";
 
 const queryClient = new QueryClient();
 
