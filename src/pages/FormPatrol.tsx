@@ -371,7 +371,7 @@ const FormPatrol = () => {
                 />
               </div>
             </TabsContent>
-          )))}
+          ))}
         </Tabs>
       </div>
 
