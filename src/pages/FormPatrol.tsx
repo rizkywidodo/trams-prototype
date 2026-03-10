@@ -1,6 +1,6 @@
 import { useState, useMemo, useRef } from "react";
 import { useNavigate } from "react-router-dom";
-import { Check, X, ChevronDown, ChevronRight, MapPin, Clock, Send, Pen } from "lucide-react";
+import { Check, ChevronDown, ChevronRight, MapPin, Clock, Send, Pen } from "lucide-react";
 import { STATIONS } from "@/data/stations";
 import {
   Select,
@@ -9,7 +9,6 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select";
-import { Tabs, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { cn } from "@/lib/utils";
 
 interface PatrolCategory {
@@ -81,18 +80,15 @@ const PATROL_CATEGORIES: PatrolCategory[] = [
 ];
 
 const SHIFTS = [
-  { id: "handover-1", label: "Handover Checklist", time: "06:00" },
-  { id: "checklist-1", label: "Checklist", time: "" },
-  { id: "handover-2", label: "Handover Checklist", time: "14:00" },
-  { id: "checklist-2", label: "Checklist", time: "" },
-  { id: "handover-3", label: "Handover Checklist", time: "22:00" },
-  { id: "checklist-3", label: "Checklist", time: "" },
-  { id: "window-closing", label: "Window Time Clearing Checklist", time: "" },
-  { id: "opening", label: "Opening Checklist", time: "04:00" },
+  { id: "handover-1", label: "Handover", time: "06:00" },
+  { id: "checklist-1", label: "Checklist", time: "I" },
+  { id: "handover-2", label: "Handover", time: "14:00" },
+  { id: "checklist-2", label: "Checklist", time: "II" },
+  { id: "handover-3", label: "Handover", time: "22:00" },
+  { id: "checklist-3", label: "Checklist", time: "III" },
+  { id: "window-closing", label: "Window Clearing", time: "" },
+  { id: "opening", label: "Opening", time: "04:00" },
 ];
-
-type CheckValue = "ok" | "no" | null;
-type PatrolChecks = Record<string, CheckValue>;
 
 // Simple canvas-based signature pad
 const SignaturePad = ({ onClear, canvasRef }: { onClear: () => void; canvasRef: React.RefObject<HTMLCanvasElement> }) => {
@@ -162,61 +158,57 @@ const SignaturePad = ({ onClear, canvasRef }: { onClear: () => void; canvasRef: 
 const FormPatrol = () => {
   const navigate = useNavigate();
   const [selectedStation, setSelectedStation] = useState<string>(STATIONS[0].id);
-  const [activeShift, setActiveShift] = useState(SHIFTS[0].id);
-  const [expandedCats, setExpandedCats] = useState<Record<string, boolean>>({ keselamatan: true });
-  const [checks, setChecks] = useState<Record<string, PatrolChecks>>({});
+  const [expandedCats, setExpandedCats] = useState<Record<string, boolean>>({
+    keselamatan: true, kemudahan: true, kesetaraan: true,
+    kehandalan: true, kenyamanan: true, keamanan: true,
+  });
+  const [checks, setChecks] = useState<Record<string, Record<string, boolean>>>({});
 
   const sigPetugas = useRef<HTMLCanvasElement>(null);
   const sigKepala = useRef<HTMLCanvasElement>(null);
 
   const stationName = STATIONS.find((s) => s.id === selectedStation)?.name ?? "";
 
-  const toggleCheck = (itemId: string) => {
+  const toggleCheck = (shiftId: string, itemId: string) => {
     setChecks((prev) => {
-      const shiftChecks = prev[activeShift] || {};
-      const cur = shiftChecks[itemId] || null;
-      const next: CheckValue = cur === null ? "ok" : cur === "ok" ? "no" : null;
-      return { ...prev, [activeShift]: { ...shiftChecks, [itemId]: next } };
+      const sc = prev[shiftId] || {};
+      return { ...prev, [shiftId]: { ...sc, [itemId]: !sc[itemId] } };
     });
   };
 
-  const getCheck = (itemId: string): CheckValue => checks[activeShift]?.[itemId] || null;
-
-  const totalItems = PATROL_CATEGORIES.reduce((a, c) => a + c.items.length, 0);
-  const filledItems = useMemo(() => {
-    const sc = checks[activeShift] || {};
-    return Object.values(sc).filter((v) => v !== null).length;
-  }, [checks, activeShift]);
-  const progress = totalItems > 0 ? Math.round((filledItems / totalItems) * 100) : 0;
+  const totalCells = PATROL_CATEGORIES.reduce((a, c) => a + c.items.length, 0) * SHIFTS.length;
+  const filledCells = useMemo(() => {
+    let count = 0;
+    Object.values(checks).forEach((sc) => {
+      Object.values(sc).forEach((v) => { if (v) count++; });
+    });
+    return count;
+  }, [checks]);
+  const progress = totalCells > 0 ? Math.round((filledCells / totalCells) * 100) : 0;
 
   const clearCanvas = (ref: React.RefObject<HTMLCanvasElement>) => {
     const ctx = ref.current?.getContext("2d");
-    if (ctx && ref.current) {
-      ctx.clearRect(0, 0, ref.current.width, ref.current.height);
-    }
+    if (ctx && ref.current) ctx.clearRect(0, 0, ref.current.width, ref.current.height);
   };
 
   const handleSubmit = () => {
     navigate(`/daily-check/patrol/submitted?station=${selectedStation}`);
   };
 
-  const activeShiftData = SHIFTS.find((s) => s.id === activeShift)!;
+  let globalIdx = 0;
 
   return (
     <div className="min-h-[calc(100vh-4rem)] bg-background">
       {/* Header */}
-      <div className="px-6 md:px-8 pt-6 pb-4">
-        <p className="text-muted-foreground text-xs font-medium tracking-widest uppercase mb-1">Station Patrol</p>
+      <div className="px-6 md:px-8 pt-6 pb-5">
+        <p className="text-muted-foreground text-[11px] font-semibold tracking-[0.2em] uppercase mb-1">Station Patrol</p>
         <h1 className="text-xl md:text-2xl font-extrabold text-foreground tracking-tight">
           Form Station Patrol
         </h1>
         <div className="flex items-center gap-3 mt-3">
-          <div className="flex items-center gap-2">
-            <MapPin className="h-3.5 w-3.5 text-muted-foreground" />
-            <span className="text-foreground text-sm font-medium">{stationName}</span>
-          </div>
+          <MapPin className="h-3.5 w-3.5 text-accent" />
           <Select value={selectedStation} onValueChange={setSelectedStation}>
-            <SelectTrigger className="w-52 h-9 text-sm">
+            <SelectTrigger className="w-56 h-9 text-sm">
               <SelectValue />
             </SelectTrigger>
             <SelectContent>
@@ -228,135 +220,91 @@ const FormPatrol = () => {
         </div>
       </div>
 
-      {/* Table-style checklist */}
+      {/* Progress */}
       <div className="px-6 md:px-8 pb-4">
-        <div className="rounded-xl border border-border bg-card overflow-hidden">
-          {/* Table header with shift columns */}
+        <div className="flex items-center justify-between mb-2">
+          <div className="flex items-center gap-2">
+            <Clock className="h-3.5 w-3.5 text-muted-foreground" />
+            <span className="text-xs text-muted-foreground font-medium">Progress</span>
+          </div>
+          <span className="text-xs font-semibold text-foreground">
+            {filledCells}<span className="text-muted-foreground font-normal">/{totalCells}</span>
+          </span>
+        </div>
+        <div className="h-1.5 bg-muted rounded-full overflow-hidden">
+          <div
+            className="h-full bg-accent rounded-full transition-all duration-500 ease-out"
+            style={{ width: `${progress}%` }}
+          />
+        </div>
+      </div>
+
+      {/* Table */}
+      <div className="px-6 md:px-8 pb-6">
+        <div className="rounded-xl border border-border bg-card shadow-sm overflow-hidden">
           <div className="overflow-x-auto">
-            <table className="w-full min-w-[900px]">
+            <table className="w-full min-w-[1000px]">
               <thead>
                 <tr className="bg-primary text-primary-foreground">
-                  <th className="px-3 py-3 text-left text-xs font-bold w-12 border-r border-primary-foreground/20">No</th>
-                  <th className="px-3 py-3 text-left text-xs font-bold w-36 border-r border-primary-foreground/20">Indikator</th>
-                  <th className="px-3 py-3 text-left text-xs font-bold w-44 border-r border-primary-foreground/20">Deskripsi</th>
+                  <th className="px-3 py-3 text-left text-[11px] font-bold w-10 border-r border-primary-foreground/10">No</th>
+                  <th className="px-4 py-3 text-left text-[11px] font-bold border-r border-primary-foreground/10" style={{ minWidth: 220 }}>Indikator / Deskripsi</th>
                   {SHIFTS.map((shift) => (
-                    <th
-                      key={shift.id}
-                      className={cn(
-                        "px-2 py-2 text-center text-[10px] font-bold border-r border-primary-foreground/20 last:border-r-0 min-w-[100px]",
-                        activeShift === shift.id && "bg-accent text-accent-foreground"
+                    <th key={shift.id} className="px-1 py-3 text-center border-r border-primary-foreground/10 last:border-r-0" style={{ minWidth: 80 }}>
+                      <div className="text-[10px] font-bold leading-tight">{shift.label}</div>
+                      {shift.time && (
+                        <div className="text-[10px] font-semibold opacity-70 mt-0.5">{shift.time}</div>
                       )}
-                    >
-                      <button
-                        onClick={() => setActiveShift(shift.id)}
-                        className="w-full"
-                      >
-                        <span className="block leading-tight">{shift.label}</span>
-                        {shift.time && (
-                          <span className="block text-[10px] font-bold mt-1 opacity-80">{shift.time}</span>
-                        )}
-                      </button>
-                    </th>
-                  ))}
-                </tr>
-                {/* OK/NO sub-header */}
-                <tr className="bg-primary/90 text-primary-foreground">
-                  <th colSpan={3} className="border-r border-primary-foreground/20" />
-                  {SHIFTS.map((shift) => (
-                    <th key={shift.id} className={cn(
-                      "border-r border-primary-foreground/20 last:border-r-0",
-                      activeShift === shift.id && "bg-accent/90"
-                    )}>
-                      <div className="flex text-[10px]">
-                        <span className="flex-1 py-1.5 text-center font-semibold">OK</span>
-                        <span className="flex-1 py-1.5 text-center font-semibold">NO</span>
-                      </div>
                     </th>
                   ))}
                 </tr>
               </thead>
               <tbody>
                 {PATROL_CATEGORIES.map((cat) => {
-                  const isOpen = expandedCats[cat.id] !== false; // default open
-
+                  const isOpen = expandedCats[cat.id] !== false;
                   return (
                     <>
-                      {/* Category separator row */}
-                      <tr key={`cat-${cat.id}`} className="bg-muted/50">
-                        <td colSpan={3 + SHIFTS.length} className="px-3 py-2.5">
+                      {/* Category header */}
+                      <tr key={`cat-${cat.id}`} className="bg-secondary/60">
+                        <td colSpan={2 + SHIFTS.length} className="px-4 py-2.5">
                           <button
-                            onClick={() => setExpandedCats((p) => ({ ...p, [cat.id]: !(p[cat.id] !== false) }))}
-                            className="flex items-center gap-2 w-full"
+                            onClick={() => setExpandedCats((p) => ({ ...p, [cat.id]: !isOpen }))}
+                            className="flex items-center gap-2 w-full group"
                           >
-                            {isOpen ? <ChevronDown className="h-4 w-4 text-muted-foreground" /> : <ChevronRight className="h-4 w-4 text-muted-foreground" />}
-                            <span className="text-xs font-bold text-foreground tracking-wide">{cat.name}</span>
+                            {isOpen
+                              ? <ChevronDown className="h-3.5 w-3.5 text-muted-foreground group-hover:text-foreground transition-colors" />
+                              : <ChevronRight className="h-3.5 w-3.5 text-muted-foreground group-hover:text-foreground transition-colors" />
+                            }
+                            <span className="text-[11px] font-bold text-foreground tracking-wide">{cat.name}</span>
+                            <span className="text-[10px] text-muted-foreground font-medium ml-1">({cat.items.length} item)</span>
                           </button>
                         </td>
                       </tr>
-                      {isOpen && cat.items.map((item, idx) => {
-                        const itemLetter = String.fromCharCode(97 + idx); // a, b, c...
-                        const catPrefix = cat.id === "keselamatan" ? "I" : cat.id === "kemudahan" ? "II" : cat.id === "kesetaraan" ? "III" : cat.id === "kehandalan" ? "IV" : cat.id === "kenyamanan" ? "V" : "VI";
+                      {isOpen && cat.items.map((item) => {
+                        globalIdx++;
                         return (
-                          <tr key={item.id} className="border-b border-border hover:bg-muted/20 transition-colors">
-                            <td className="px-3 py-3 text-xs text-muted-foreground font-mono border-r border-border align-top">
-                              {catPrefix}{itemLetter}
+                          <tr key={item.id} className="border-b border-border/60 hover:bg-muted/30 transition-colors">
+                            <td className="px-3 py-3 text-[11px] text-muted-foreground font-mono border-r border-border/40 align-top text-center">
+                              {globalIdx}
                             </td>
-                            <td className="px-3 py-3 text-xs font-medium text-foreground leading-snug border-r border-border align-top">
-                              {item.indicator}
-                            </td>
-                            <td className="px-3 py-3 text-xs text-muted-foreground leading-relaxed border-r border-border align-top">
-                              {item.description}
+                            <td className="px-4 py-3 border-r border-border/40 align-top">
+                              <p className="text-xs font-semibold text-foreground leading-snug">{item.indicator}</p>
+                              <p className="text-[11px] text-muted-foreground leading-relaxed mt-0.5">{item.description}</p>
                             </td>
                             {SHIFTS.map((shift) => {
-                              const val = checks[shift.id]?.[item.id] || null;
-                              const isActive = shift.id === activeShift;
+                              const checked = checks[shift.id]?.[item.id] || false;
                               return (
-                                <td key={shift.id} className={cn(
-                                  "border-r border-border last:border-r-0",
-                                  isActive && "bg-accent/5"
-                                )}>
-                                  <div className="flex">
-                                    {/* OK checkbox */}
+                                <td key={shift.id} className="border-r border-border/40 last:border-r-0 align-middle">
+                                  <div className="flex items-center justify-center py-2">
                                     <button
-                                      onClick={() => {
-                                        setActiveShift(shift.id);
-                                        setChecks((prev) => {
-                                          const sc = prev[shift.id] || {};
-                                          const cur = sc[item.id] || null;
-                                          return { ...prev, [shift.id]: { ...sc, [item.id]: cur === "ok" ? null : "ok" } };
-                                        });
-                                      }}
-                                      className="flex-1 flex items-center justify-center py-2.5"
+                                      onClick={() => toggleCheck(shift.id, item.id)}
+                                      className={cn(
+                                        "h-7 w-7 rounded-md border-2 flex items-center justify-center transition-all duration-200",
+                                        checked
+                                          ? "bg-accent border-accent text-accent-foreground shadow-sm shadow-accent/20 scale-105"
+                                          : "border-border/60 bg-background hover:border-accent/50 hover:bg-accent/5"
+                                      )}
                                     >
-                                      <div className={cn(
-                                        "h-6 w-6 rounded border-2 flex items-center justify-center transition-all",
-                                        val === "ok"
-                                          ? "bg-accent border-accent text-accent-foreground"
-                                          : "border-border bg-card hover:border-accent/40"
-                                      )}>
-                                        {val === "ok" && <Check className="h-3.5 w-3.5" strokeWidth={3} />}
-                                      </div>
-                                    </button>
-                                    {/* NO checkbox */}
-                                    <button
-                                      onClick={() => {
-                                        setActiveShift(shift.id);
-                                        setChecks((prev) => {
-                                          const sc = prev[shift.id] || {};
-                                          const cur = sc[item.id] || null;
-                                          return { ...prev, [shift.id]: { ...sc, [item.id]: cur === "no" ? null : "no" } };
-                                        });
-                                      }}
-                                      className="flex-1 flex items-center justify-center py-2.5"
-                                    >
-                                      <div className={cn(
-                                        "h-6 w-6 rounded border-2 flex items-center justify-center transition-all",
-                                        val === "no"
-                                          ? "bg-destructive border-destructive text-destructive-foreground"
-                                          : "border-border bg-card hover:border-destructive/40"
-                                      )}>
-                                        {val === "no" && <X className="h-3.5 w-3.5" strokeWidth={3} />}
-                                      </div>
+                                      {checked && <Check className="h-4 w-4" strokeWidth={2.5} />}
                                     </button>
                                   </div>
                                 </td>
@@ -374,32 +322,13 @@ const FormPatrol = () => {
         </div>
       </div>
 
-      {/* Progress bar */}
-      <div className="px-6 md:px-8 pb-4">
-        <div className="flex items-center justify-between mb-2">
-          <div className="flex items-center gap-2">
-            <Clock className="h-3.5 w-3.5 text-muted-foreground" />
-            <span className="text-xs text-muted-foreground font-medium">
-              {activeShiftData.label}{activeShiftData.time ? ` · ${activeShiftData.time}` : ""}
-            </span>
-          </div>
-          <span className="text-xs font-semibold text-foreground">
-            {filledItems}/{totalItems}
-            <span className="text-muted-foreground font-normal ml-1">terisi</span>
-          </span>
-        </div>
-        <div className="h-1.5 bg-muted rounded-full overflow-hidden">
-          <div
-            className="h-full bg-accent rounded-full transition-all duration-500 ease-out"
-            style={{ width: `${progress}%` }}
-          />
-        </div>
-      </div>
-
       {/* TTD / Signature Section */}
       <div className="px-6 md:px-8 pb-6">
-        <div className="rounded-xl border border-border bg-card p-6">
-          <h3 className="text-sm font-bold text-foreground mb-4">Tanda Tangan</h3>
+        <div className="rounded-xl border border-border bg-card p-6 shadow-sm">
+          <h3 className="text-sm font-bold text-foreground mb-4 flex items-center gap-2">
+            <Pen className="h-4 w-4 text-accent" />
+            Tanda Tangan
+          </h3>
           <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
             <div>
               <label className="text-xs font-semibold text-muted-foreground mb-2 block">
@@ -421,10 +350,10 @@ const FormPatrol = () => {
       <div className="px-6 md:px-8 pb-8">
         <button
           onClick={handleSubmit}
-          disabled={filledItems === 0}
+          disabled={filledCells === 0}
           className={cn(
             "w-full flex items-center justify-center gap-2.5 rounded-xl py-4 font-bold text-sm transition-all duration-300",
-            filledItems > 0
+            filledCells > 0
               ? "bg-accent text-accent-foreground shadow-lg shadow-accent/20 hover:shadow-xl hover:shadow-accent/30 hover:-translate-y-0.5"
               : "bg-muted text-muted-foreground cursor-not-allowed"
           )}
