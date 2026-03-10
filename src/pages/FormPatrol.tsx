@@ -1,6 +1,6 @@
 import { useState, useMemo, useRef } from "react";
 import { useNavigate } from "react-router-dom";
-import { Check, ChevronDown, ChevronRight, MapPin, Clock, Send, Pen } from "lucide-react";
+import { Check, MapPin, Clock, Send, Pen } from "lucide-react";
 import { STATIONS } from "@/data/stations";
 import {
   Select,
@@ -9,6 +9,7 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select";
+import { Tabs, TabsList, TabsTrigger, TabsContent } from "@/components/ui/tabs";
 import { cn } from "@/lib/utils";
 
 interface PatrolCategory {
@@ -80,17 +81,19 @@ const PATROL_CATEGORIES: PatrolCategory[] = [
 ];
 
 const SHIFTS = [
-  { id: "handover-1", label: "Handover", time: "06:00" },
-  { id: "checklist-1", label: "Checklist", time: "I" },
-  { id: "handover-2", label: "Handover", time: "14:00" },
-  { id: "checklist-2", label: "Checklist", time: "II" },
-  { id: "handover-3", label: "Handover", time: "22:00" },
-  { id: "checklist-3", label: "Checklist", time: "III" },
-  { id: "window-closing", label: "Window Clearing", time: "" },
-  { id: "opening", label: "Opening", time: "04:00" },
+  { id: "handover-1", label: "Handover 06:00", shortLabel: "HO 06:00" },
+  { id: "checklist-1", label: "Checklist I", shortLabel: "CL I" },
+  { id: "handover-2", label: "Handover 14:00", shortLabel: "HO 14:00" },
+  { id: "checklist-2", label: "Checklist II", shortLabel: "CL II" },
+  { id: "handover-3", label: "Handover 22:00", shortLabel: "HO 22:00" },
+  { id: "checklist-3", label: "Checklist III", shortLabel: "CL III" },
+  { id: "window-closing", label: "Window Clearing", shortLabel: "WC" },
+  { id: "opening", label: "Opening 04:00", shortLabel: "Open" },
 ];
 
-// Simple canvas-based signature pad
+const ALL_ITEMS = PATROL_CATEGORIES.flatMap((c) => c.items);
+
+// Signature pad component
 const SignaturePad = ({ onClear, canvasRef }: { onClear: () => void; canvasRef: React.RefObject<HTMLCanvasElement> }) => {
   const isDrawing = useRef(false);
 
@@ -155,19 +158,101 @@ const SignaturePad = ({ onClear, canvasRef }: { onClear: () => void; canvasRef: 
   );
 };
 
+// Checklist for a single shift
+const ShiftChecklist = ({
+  shiftId,
+  checks,
+  toggleCheck,
+}: {
+  shiftId: string;
+  checks: Record<string, boolean>;
+  toggleCheck: (itemId: string) => void;
+}) => {
+  let idx = 0;
+  const checkedCount = Object.values(checks).filter(Boolean).length;
+
+  return (
+    <div className="space-y-1">
+      {/* Mini progress for this shift */}
+      <div className="flex items-center justify-between px-1 pb-3">
+        <span className="text-[11px] text-muted-foreground">
+          {checkedCount} / {ALL_ITEMS.length} item selesai
+        </span>
+        <div className="h-1 w-32 bg-muted rounded-full overflow-hidden">
+          <div
+            className="h-full bg-accent rounded-full transition-all duration-300"
+            style={{ width: `${ALL_ITEMS.length > 0 ? (checkedCount / ALL_ITEMS.length) * 100 : 0}%` }}
+          />
+        </div>
+      </div>
+
+      {PATROL_CATEGORIES.map((cat) => (
+        <div key={cat.id} className="mb-3">
+          {/* Category label */}
+          <div className="px-3 py-2 bg-secondary/50 rounded-lg mb-1">
+            <span className="text-[11px] font-bold text-foreground tracking-wide">{cat.name}</span>
+            <span className="text-[10px] text-muted-foreground ml-2">({cat.items.length})</span>
+          </div>
+
+          {/* Items */}
+          <div className="divide-y divide-border/40">
+            {cat.items.map((item) => {
+              idx++;
+              const checked = checks[item.id] || false;
+              return (
+                <button
+                  key={item.id}
+                  onClick={() => toggleCheck(item.id)}
+                  className={cn(
+                    "w-full flex items-start gap-3 px-3 py-3 text-left transition-colors rounded-md",
+                    checked ? "bg-accent/5" : "hover:bg-muted/40"
+                  )}
+                >
+                  {/* Checkbox */}
+                  <div
+                    className={cn(
+                      "mt-0.5 h-6 w-6 rounded-md border-2 flex-shrink-0 flex items-center justify-center transition-all duration-200",
+                      checked
+                        ? "bg-accent border-accent text-accent-foreground shadow-sm"
+                        : "border-border/60 bg-background"
+                    )}
+                  >
+                    {checked && <Check className="h-3.5 w-3.5" strokeWidth={2.5} />}
+                  </div>
+
+                  {/* Content */}
+                  <div className="flex-1 min-w-0">
+                    <div className="flex items-baseline gap-2">
+                      <span className="text-[10px] text-muted-foreground font-mono">{idx}.</span>
+                      <p className={cn(
+                        "text-xs font-semibold leading-snug transition-colors",
+                        checked ? "text-muted-foreground line-through" : "text-foreground"
+                      )}>
+                        {item.indicator}
+                      </p>
+                    </div>
+                    <p className="text-[11px] text-muted-foreground leading-relaxed mt-0.5 ml-5">
+                      {item.description}
+                    </p>
+                  </div>
+                </button>
+              );
+            })}
+          </div>
+        </div>
+      )))}
+    </div>
+  );
+};
+
 const FormPatrol = () => {
   const navigate = useNavigate();
   const [selectedStation, setSelectedStation] = useState<string>(STATIONS[0].id);
-  const [expandedCats, setExpandedCats] = useState<Record<string, boolean>>({
-    keselamatan: true, kemudahan: true, kesetaraan: true,
-    kehandalan: true, kenyamanan: true, keamanan: true,
-  });
+  const [activeShift, setActiveShift] = useState(SHIFTS[0].id);
   const [checks, setChecks] = useState<Record<string, Record<string, boolean>>>({});
 
   const sigPetugas = useRef<HTMLCanvasElement>(null);
   const sigKepala = useRef<HTMLCanvasElement>(null);
-
-  const stationName = STATIONS.find((s) => s.id === selectedStation)?.name ?? "";
 
   const toggleCheck = (shiftId: string, itemId: string) => {
     setChecks((prev) => {
@@ -176,7 +261,7 @@ const FormPatrol = () => {
     });
   };
 
-  const totalCells = PATROL_CATEGORIES.reduce((a, c) => a + c.items.length, 0) * SHIFTS.length;
+  const totalCells = ALL_ITEMS.length * SHIFTS.length;
   const filledCells = useMemo(() => {
     let count = 0;
     Object.values(checks).forEach((sc) => {
@@ -195,12 +280,17 @@ const FormPatrol = () => {
     navigate(`/daily-check/patrol/submitted?station=${selectedStation}`);
   };
 
-  let globalIdx = 0;
+  // Count completed shifts (all items checked)
+  const shiftCompletionStatus = SHIFTS.map((s) => {
+    const sc = checks[s.id] || {};
+    const done = Object.values(sc).filter(Boolean).length;
+    return { ...s, done, total: ALL_ITEMS.length, complete: done === ALL_ITEMS.length && ALL_ITEMS.length > 0 };
+  });
 
   return (
     <div className="min-h-[calc(100vh-4rem)] bg-background">
       {/* Header */}
-      <div className="px-6 md:px-8 pt-6 pb-5">
+      <div className="px-6 md:px-8 pt-6 pb-4">
         <p className="text-muted-foreground text-[11px] font-semibold tracking-[0.2em] uppercase mb-1">Station Patrol</p>
         <h1 className="text-xl md:text-2xl font-extrabold text-foreground tracking-tight">
           Form Station Patrol
@@ -220,15 +310,16 @@ const FormPatrol = () => {
         </div>
       </div>
 
-      {/* Progress */}
+      {/* Overall Progress */}
       <div className="px-6 md:px-8 pb-4">
         <div className="flex items-center justify-between mb-2">
           <div className="flex items-center gap-2">
             <Clock className="h-3.5 w-3.5 text-muted-foreground" />
-            <span className="text-xs text-muted-foreground font-medium">Progress</span>
+            <span className="text-xs text-muted-foreground font-medium">Progress Keseluruhan</span>
           </div>
           <span className="text-xs font-semibold text-foreground">
-            {filledCells}<span className="text-muted-foreground font-normal">/{totalCells}</span>
+            {filledCells}<span className="text-muted-foreground font-normal"> / {totalCells}</span>
+            <span className="text-muted-foreground font-normal ml-1">({progress}%)</span>
           </span>
         </div>
         <div className="h-1.5 bg-muted rounded-full overflow-hidden">
@@ -239,87 +330,49 @@ const FormPatrol = () => {
         </div>
       </div>
 
-      {/* Table */}
+      {/* Shift Tabs */}
       <div className="px-6 md:px-8 pb-6">
-        <div className="rounded-xl border border-border bg-card shadow-sm overflow-hidden">
-          <div className="overflow-x-auto">
-            <table className="w-full min-w-[1000px]">
-              <thead>
-                <tr className="bg-primary text-primary-foreground">
-                  <th className="px-3 py-3 text-left text-[11px] font-bold w-10 border-r border-primary-foreground/10">No</th>
-                  <th className="px-4 py-3 text-left text-[11px] font-bold border-r border-primary-foreground/10" style={{ minWidth: 220 }}>Indikator / Deskripsi</th>
-                  {SHIFTS.map((shift) => (
-                    <th key={shift.id} className="px-1 py-3 text-center border-r border-primary-foreground/10 last:border-r-0" style={{ minWidth: 80 }}>
-                      <div className="text-[10px] font-bold leading-tight">{shift.label}</div>
-                      {shift.time && (
-                        <div className="text-[10px] font-semibold opacity-70 mt-0.5">{shift.time}</div>
-                      )}
-                    </th>
-                  ))}
-                </tr>
-              </thead>
-              <tbody>
-                {PATROL_CATEGORIES.map((cat) => {
-                  const isOpen = expandedCats[cat.id] !== false;
-                  return (
-                    <>
-                      {/* Category header */}
-                      <tr key={`cat-${cat.id}`} className="bg-secondary/60">
-                        <td colSpan={2 + SHIFTS.length} className="px-4 py-2.5">
-                          <button
-                            onClick={() => setExpandedCats((p) => ({ ...p, [cat.id]: !isOpen }))}
-                            className="flex items-center gap-2 w-full group"
-                          >
-                            {isOpen
-                              ? <ChevronDown className="h-3.5 w-3.5 text-muted-foreground group-hover:text-foreground transition-colors" />
-                              : <ChevronRight className="h-3.5 w-3.5 text-muted-foreground group-hover:text-foreground transition-colors" />
-                            }
-                            <span className="text-[11px] font-bold text-foreground tracking-wide">{cat.name}</span>
-                            <span className="text-[10px] text-muted-foreground font-medium ml-1">({cat.items.length} item)</span>
-                          </button>
-                        </td>
-                      </tr>
-                      {isOpen && cat.items.map((item) => {
-                        globalIdx++;
-                        return (
-                          <tr key={item.id} className="border-b border-border/60 hover:bg-muted/30 transition-colors">
-                            <td className="px-3 py-3 text-[11px] text-muted-foreground font-mono border-r border-border/40 align-top text-center">
-                              {globalIdx}
-                            </td>
-                            <td className="px-4 py-3 border-r border-border/40 align-top">
-                              <p className="text-xs font-semibold text-foreground leading-snug">{item.indicator}</p>
-                              <p className="text-[11px] text-muted-foreground leading-relaxed mt-0.5">{item.description}</p>
-                            </td>
-                            {SHIFTS.map((shift) => {
-                              const checked = checks[shift.id]?.[item.id] || false;
-                              return (
-                                <td key={shift.id} className="border-r border-border/40 last:border-r-0 align-middle">
-                                  <div className="flex items-center justify-center py-2">
-                                    <button
-                                      onClick={() => toggleCheck(shift.id, item.id)}
-                                      className={cn(
-                                        "h-7 w-7 rounded-md border-2 flex items-center justify-center transition-all duration-200",
-                                        checked
-                                          ? "bg-accent border-accent text-accent-foreground shadow-sm shadow-accent/20 scale-105"
-                                          : "border-border/60 bg-background hover:border-accent/50 hover:bg-accent/5"
-                                      )}
-                                    >
-                                      {checked && <Check className="h-4 w-4" strokeWidth={2.5} />}
-                                    </button>
-                                  </div>
-                                </td>
-                              );
-                            })}
-                          </tr>
-                        );
-                      })}
-                    </>
-                  );
-                })}
-              </tbody>
-            </table>
-          </div>
-        </div>
+        <Tabs value={activeShift} onValueChange={setActiveShift}>
+          <TabsList className="w-full h-auto flex-wrap gap-1 bg-muted/50 p-1.5 rounded-xl">
+            {shiftCompletionStatus.map((s) => (
+              <TabsTrigger
+                key={s.id}
+                value={s.id}
+                className={cn(
+                  "relative text-[11px] font-semibold px-3 py-2 rounded-lg data-[state=active]:shadow-md transition-all",
+                  s.complete && "data-[state=inactive]:text-accent"
+                )}
+              >
+                {s.shortLabel}
+                {s.done > 0 && (
+                  <span className={cn(
+                    "ml-1.5 text-[9px] font-bold px-1.5 py-0.5 rounded-full",
+                    s.complete
+                      ? "bg-accent text-accent-foreground"
+                      : "bg-muted-foreground/15 text-muted-foreground"
+                  )}>
+                    {s.done}
+                  </span>
+                )}
+              </TabsTrigger>
+            ))}
+          </TabsList>
+
+          {SHIFTS.map((shift) => (
+            <TabsContent key={shift.id} value={shift.id} className="mt-4">
+              <div className="rounded-xl border border-border bg-card shadow-sm p-4">
+                <div className="flex items-center justify-between mb-4">
+                  <h2 className="text-sm font-bold text-foreground">{shift.label}</h2>
+                </div>
+                <ShiftChecklist
+                  shiftId={shift.id}
+                  checks={checks[shift.id] || {}}
+                  toggleCheck={(itemId) => toggleCheck(shift.id, itemId)}
+                />
+              </div>
+            </TabsContent>
+          )))}
+        </Tabs>
       </div>
 
       {/* TTD / Signature Section */}
