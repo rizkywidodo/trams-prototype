@@ -164,10 +164,12 @@ const ShiftChecklist = ({
   shiftId,
   checks,
   toggleCheck,
+  toggleCategory,
 }: {
   shiftId: string;
   checks: Record<string, boolean>;
   toggleCheck: (itemId: string) => void;
+  toggleCategory: (catId: string) => void;
 }) => {
   let idx = 0;
   const checkedCount = Object.values(checks).filter(Boolean).length;
@@ -187,13 +189,27 @@ const ShiftChecklist = ({
         </div>
       </div>
 
-      {PATROL_CATEGORIES.map((cat) => (
-        <div key={cat.id} className="mb-3">
-          {/* Category label */}
-          <div className="px-3 py-2 bg-secondary/50 rounded-lg mb-1">
-            <span className="text-[11px] font-bold text-foreground tracking-wide">{cat.name}</span>
-            <span className="text-[10px] text-muted-foreground ml-2">({cat.items.length})</span>
-          </div>
+      {PATROL_CATEGORIES.map((cat) => {
+        const allChecked = cat.items.length > 0 && cat.items.every((item) => checks[item.id]);
+        const someChecked = cat.items.some((item) => checks[item.id]) && !allChecked;
+
+        return (
+          <div key={cat.id} className="mb-3">
+            {/* Category label with select-all checkbox */}
+            <div className="px-3 py-2 bg-secondary/50 rounded-lg mb-1 flex items-center justify-between">
+              <div>
+                <span className="text-[11px] font-bold text-foreground tracking-wide">{cat.name}</span>
+                <span className="text-[10px] text-muted-foreground ml-2">({cat.items.length})</span>
+              </div>
+              <div className="flex items-center gap-2">
+                <span className="text-[10px] text-muted-foreground">Semua</span>
+                <Checkbox
+                  checked={allChecked ? true : someChecked ? "indeterminate" : false}
+                  onCheckedChange={() => toggleCategory(cat.id)}
+                  className="h-5 w-5 rounded border-2 data-[state=checked]:bg-accent data-[state=checked]:border-accent data-[state=indeterminate]:bg-accent/60 data-[state=indeterminate]:border-accent/60"
+                />
+              </div>
+            </div>
 
           {/* Items */}
           <div className="divide-y divide-border/40">
