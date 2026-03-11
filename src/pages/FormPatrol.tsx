@@ -1,6 +1,7 @@
-import { useState, useMemo, useRef } from "react";
+import { useState, useMemo, useRef, useEffect } from "react";
 import { useNavigate } from "react-router-dom";
-import { Check, MapPin, Clock, Send, Pen } from "lucide-react";
+import { Check, MapPin, Clock, Send, Pen, Calendar } from "lucide-react";
+import { Checkbox } from "@/components/ui/checkbox";
 import { STATIONS } from "@/data/stations";
 import {
   Select,
@@ -163,10 +164,12 @@ const ShiftChecklist = ({
   shiftId,
   checks,
   toggleCheck,
+  toggleCategory,
 }: {
   shiftId: string;
   checks: Record<string, boolean>;
   toggleCheck: (itemId: string) => void;
+  toggleCategory: (catId: string) => void;
 }) => {
   let idx = 0;
   const checkedCount = Object.values(checks).filter(Boolean).length;
@@ -186,13 +189,27 @@ const ShiftChecklist = ({
         </div>
       </div>
 
-      {PATROL_CATEGORIES.map((cat) => (
-        <div key={cat.id} className="mb-3">
-          {/* Category label */}
-          <div className="px-3 py-2 bg-secondary/50 rounded-lg mb-1">
-            <span className="text-[11px] font-bold text-foreground tracking-wide">{cat.name}</span>
-            <span className="text-[10px] text-muted-foreground ml-2">({cat.items.length})</span>
-          </div>
+      {PATROL_CATEGORIES.map((cat) => {
+        const allChecked = cat.items.length > 0 && cat.items.every((item) => checks[item.id]);
+        const someChecked = cat.items.some((item) => checks[item.id]) && !allChecked;
+
+        return (
+          <div key={cat.id} className="mb-3">
+            {/* Category label with select-all checkbox */}
+            <div className="px-3 py-2 bg-secondary/50 rounded-lg mb-1 flex items-center justify-between">
+              <div>
+                <span className="text-[11px] font-bold text-foreground tracking-wide">{cat.name}</span>
+                <span className="text-[10px] text-muted-foreground ml-2">({cat.items.length})</span>
+              </div>
+              <div className="flex items-center gap-2">
+                <span className="text-[10px] text-muted-foreground">Semua</span>
+                <Checkbox
+                  checked={allChecked ? true : someChecked ? "indeterminate" : false}
+                  onCheckedChange={() => toggleCategory(cat.id)}
+                  className="h-5 w-5 rounded border-2 data-[state=checked]:bg-accent data-[state=checked]:border-accent data-[state=indeterminate]:bg-accent/60 data-[state=indeterminate]:border-accent/60"
+                />
+              </div>
+            </div>
 
           {/* Items */}
           <div className="divide-y divide-border/40">
@@ -240,7 +257,8 @@ const ShiftChecklist = ({
             })}
           </div>
         </div>
-      ))}
+        );
+      })}
     </div>
   );
 };
@@ -250,6 +268,12 @@ const FormPatrol = () => {
   const [selectedStation, setSelectedStation] = useState<string>(STATIONS[0].id);
   const [activeShift, setActiveShift] = useState(SHIFTS[0].id);
   const [checks, setChecks] = useState<Record<string, Record<string, boolean>>>({});
+  const [currentTime, setCurrentTime] = useState(new Date());
+
+  useEffect(() => {
+    const timer = setInterval(() => setCurrentTime(new Date()), 1000);
+    return () => clearInterval(timer);
+  }, []);
 
   const sigPetugas = useRef<HTMLCanvasElement>(null);
   const sigKepala = useRef<HTMLCanvasElement>(null);
@@ -258,6 +282,17 @@ const FormPatrol = () => {
     setChecks((prev) => {
       const sc = prev[shiftId] || {};
       return { ...prev, [shiftId]: { ...sc, [itemId]: !sc[itemId] } };
+    });
+  };
+
+  const toggleCategory = (shiftId: string, catId: string) => {
+    setChecks((prev) => {
+      const sc = { ...(prev[shiftId] || {}) };
+      const cat = PATROL_CATEGORIES.find((c) => c.id === catId);
+      if (!cat) return prev;
+      const allChecked = cat.items.every((item) => sc[item.id]);
+      cat.items.forEach((item) => { sc[item.id] = !allChecked; });
+      return { ...prev, [shiftId]: sc };
     });
   };
 
@@ -295,18 +330,31 @@ const FormPatrol = () => {
         <h1 className="text-xl md:text-2xl font-extrabold text-foreground tracking-tight">
           Form Station Patrol
         </h1>
-        <div className="flex items-center gap-3 mt-3">
-          <MapPin className="h-3.5 w-3.5 text-accent" />
-          <Select value={selectedStation} onValueChange={setSelectedStation}>
-            <SelectTrigger className="w-56 h-9 text-sm">
-              <SelectValue />
-            </SelectTrigger>
-            <SelectContent>
-              {STATIONS.map((s) => (
-                <SelectItem key={s.id} value={s.id}>{s.name}</SelectItem>
-              ))}
-            </SelectContent>
-          </Select>
+        <div className="flex items-center flex-wrap gap-3 mt-3">
+          <div className="flex items-center gap-2">
+            <MapPin className="h-3.5 w-3.5 text-accent" />
+            <Select value={selectedStation} onValueChange={setSelectedStation}>
+              <SelectTrigger className="w-56 h-9 text-sm">
+                <SelectValue />
+              </SelectTrigger>
+              <SelectContent>
+                {STATIONS.map((s) => (
+                  <SelectItem key={s.id} value={s.id}>{s.name}</SelectItem>
+                ))}
+              </SelectContent>
+            </Select>
+          </div>
+          <div className="flex items-center gap-2 ml-auto">
+            <Calendar className="h-3.5 w-3.5 text-accent" />
+            <span className="text-xs font-medium text-foreground">
+              {currentTime.toLocaleDateString("id-ID", { weekday: "long", day: "numeric", month: "long", year: "numeric" })}
+            </span>
+            <span className="text-muted-foreground text-xs">•</span>
+            <Clock className="h-3.5 w-3.5 text-accent" />
+            <span className="text-xs font-semibold text-foreground font-mono">
+              {currentTime.toLocaleTimeString("id-ID", { hour: "2-digit", minute: "2-digit", second: "2-digit" })}
+            </span>
+          </div>
         </div>
       </div>
 
@@ -368,6 +416,7 @@ const FormPatrol = () => {
                   shiftId={shift.id}
                   checks={checks[shift.id] || {}}
                   toggleCheck={(itemId) => toggleCheck(shift.id, itemId)}
+                  toggleCategory={(catId) => toggleCategory(shift.id, catId)}
                 />
               </div>
             </TabsContent>
