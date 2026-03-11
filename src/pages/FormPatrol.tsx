@@ -444,6 +444,23 @@ const FormPatrol = () => {
         </Tabs>
       </div>
 
+      {/* Notes for unchecked items */}
+      <div className="px-6 md:px-8 pb-6">
+        <div className="rounded-xl border border-border bg-card p-6 shadow-sm">
+          <h3 className="text-sm font-bold text-foreground mb-2 flex items-center gap-2">
+            <AlertTriangle className="h-4 w-4 text-yellow-500" />
+            Catatan Temuan
+          </h3>
+          <p className="text-[11px] text-muted-foreground mb-3">
+            Tuliskan catatan untuk indikator yang tidak terceklis atau temuan lainnya.
+          </p>
+          <Textarea
+            placeholder="Tuliskan catatan temuan di sini..."
+            className="min-h-[100px] text-sm"
+          />
+        </div>
+      </div>
+
       {/* TTD / Signature Section */}
       <div className="px-6 md:px-8 pb-6">
         <div className="rounded-xl border border-border bg-card p-6 shadow-sm">
