@@ -1,7 +1,9 @@
 import { useState, useMemo, useRef, useEffect } from "react";
 import { useNavigate } from "react-router-dom";
-import { Check, MapPin, Clock, Send, Pen, Calendar } from "lucide-react";
+import { Check, MapPin, Clock, Send, Pen, Calendar, AlertTriangle, ChevronDown } from "lucide-react";
 import { Checkbox } from "@/components/ui/checkbox";
+import { Textarea } from "@/components/ui/textarea";
+import { Collapsible, CollapsibleTrigger, CollapsibleContent } from "@/components/ui/collapsible";
 import { STATIONS } from "@/data/stations";
 import {
   Select,
@@ -191,72 +193,90 @@ const ShiftChecklist = ({
 
       {PATROL_CATEGORIES.map((cat) => {
         const allChecked = cat.items.length > 0 && cat.items.every((item) => checks[item.id]);
-        const someChecked = cat.items.some((item) => checks[item.id]) && !allChecked;
+        const someChecked = cat.items.some((item) => checks[item.id]);
 
         return (
-          <div key={cat.id} className="mb-3">
+          <Collapsible key={cat.id} defaultOpen className="mb-3">
             {/* Category label with select-all checkbox */}
-            <div className="px-3 py-2 bg-secondary/50 rounded-lg mb-1 flex items-center justify-between">
-              <div>
-                <span className="text-[11px] font-bold text-foreground tracking-wide">{cat.name}</span>
-                <span className="text-[10px] text-muted-foreground ml-2">({cat.items.length})</span>
-              </div>
+            <div className={cn(
+              "px-3 py-2 rounded-lg mb-1 flex items-center justify-between transition-colors duration-300",
+              allChecked
+                ? "bg-green-500/15 border border-green-500/30"
+                : someChecked
+                  ? "bg-yellow-500/15 border border-yellow-500/30"
+                  : "bg-secondary/50"
+            )}>
+              <CollapsibleTrigger className="flex items-center gap-2 flex-1 cursor-pointer">
+                <ChevronDown className="h-4 w-4 text-muted-foreground transition-transform duration-200 [[data-state=closed]_&]:rotate-[-90deg] [[data-state=open]_&]:rotate-0" />
+                <div className="flex items-center gap-2">
+                  {!allChecked && someChecked && (
+                    <AlertTriangle className="h-3.5 w-3.5 text-yellow-500" />
+                  )}
+                  {allChecked && (
+                    <Check className="h-3.5 w-3.5 text-green-500" />
+                  )}
+                  <span className={cn(
+                    "text-[11px] font-bold tracking-wide",
+                    allChecked ? "text-green-600 dark:text-green-400" : "text-foreground"
+                  )}>{cat.name}</span>
+                  <span className="text-[10px] text-muted-foreground">({cat.items.filter(i => checks[i.id]).length}/{cat.items.length})</span>
+                </div>
+              </CollapsibleTrigger>
               <div className="flex items-center gap-2">
                 <span className="text-[10px] text-muted-foreground">Semua</span>
                 <Checkbox
-                  checked={allChecked ? true : someChecked ? "indeterminate" : false}
+                  checked={allChecked}
                   onCheckedChange={() => toggleCategory(cat.id)}
-                  className="h-5 w-5 rounded border-2 data-[state=checked]:bg-accent data-[state=checked]:border-accent data-[state=indeterminate]:bg-accent/60 data-[state=indeterminate]:border-accent/60"
+                  className="h-5 w-5 rounded border-2 data-[state=checked]:bg-green-500 data-[state=checked]:border-green-500"
                 />
               </div>
             </div>
 
-          {/* Items */}
-          <div className="divide-y divide-border/40">
-            {cat.items.map((item) => {
-              idx++;
-              const checked = checks[item.id] || false;
-              return (
-                <button
-                  key={item.id}
-                  onClick={() => toggleCheck(item.id)}
-                  className={cn(
-                    "w-full flex items-start gap-3 px-3 py-3 text-left transition-colors rounded-md",
-                    checked ? "bg-accent/5" : "hover:bg-muted/40"
-                  )}
-                >
-                  {/* Checkbox */}
-                  <div
-                    className={cn(
-                      "mt-0.5 h-6 w-6 rounded-md border-2 flex-shrink-0 flex items-center justify-center transition-all duration-200",
-                      checked
-                        ? "bg-accent border-accent text-accent-foreground shadow-sm"
-                        : "border-border/60 bg-background"
-                    )}
-                  >
-                    {checked && <Check className="h-3.5 w-3.5" strokeWidth={2.5} />}
-                  </div>
+            <CollapsibleContent>
+              {/* Items */}
+              <div className="divide-y divide-border/40">
+                {cat.items.map((item) => {
+                  idx++;
+                  const checked = checks[item.id] || false;
+                  return (
+                    <button
+                      key={item.id}
+                      onClick={() => toggleCheck(item.id)}
+                      className={cn(
+                        "w-full flex items-start gap-3 px-3 py-3 text-left transition-colors rounded-md",
+                        checked ? "bg-accent/5" : "hover:bg-muted/40"
+                      )}
+                    >
+                      {/* Checkbox */}
+                      <div
+                        className={cn(
+                          "mt-0.5 h-6 w-6 rounded-md border-2 flex-shrink-0 flex items-center justify-center transition-all duration-200",
+                          checked
+                            ? "bg-accent border-accent text-accent-foreground shadow-sm"
+                            : "border-border/60 bg-background"
+                        )}
+                      >
+                        {checked && <Check className="h-3.5 w-3.5" strokeWidth={2.5} />}
+                      </div>
 
-                  {/* Content */}
-                  <div className="flex-1 min-w-0">
-                    <div className="flex items-baseline gap-2">
-                      <span className="text-[10px] text-muted-foreground font-mono">{idx}.</span>
-                      <p className={cn(
-                        "text-xs font-semibold leading-snug transition-colors",
-                        checked ? "text-muted-foreground line-through" : "text-foreground"
-                      )}>
-                        {item.indicator}
-                      </p>
-                    </div>
-                    <p className="text-[11px] text-muted-foreground leading-relaxed mt-0.5 ml-5">
-                      {item.description}
-                    </p>
-                  </div>
-                </button>
-              );
-            })}
-          </div>
-        </div>
+                      {/* Content */}
+                      <div className="flex-1 min-w-0">
+                        <div className="flex items-baseline gap-2">
+                          <span className="text-[10px] text-muted-foreground font-mono">{idx}.</span>
+                          <p className="text-xs font-semibold leading-snug text-foreground">
+                            {item.indicator}
+                          </p>
+                        </div>
+                        <p className="text-[11px] text-muted-foreground leading-relaxed mt-0.5 ml-5">
+                          {item.description}
+                        </p>
+                      </div>
+                    </button>
+                  );
+                })}
+              </div>
+            </CollapsibleContent>
+          </Collapsible>
         );
       })}
     </div>
@@ -422,6 +442,23 @@ const FormPatrol = () => {
             </TabsContent>
           ))}
         </Tabs>
+      </div>
+
+      {/* Notes for unchecked items */}
+      <div className="px-6 md:px-8 pb-6">
+        <div className="rounded-xl border border-border bg-card p-6 shadow-sm">
+          <h3 className="text-sm font-bold text-foreground mb-2 flex items-center gap-2">
+            <AlertTriangle className="h-4 w-4 text-yellow-500" />
+            Catatan Temuan
+          </h3>
+          <p className="text-[11px] text-muted-foreground mb-3">
+            Tuliskan catatan untuk indikator yang tidak terceklis atau temuan lainnya.
+          </p>
+          <Textarea
+            placeholder="Tuliskan catatan temuan di sini..."
+            className="min-h-[100px] text-sm"
+          />
+        </div>
       </div>
 
       {/* TTD / Signature Section */}
