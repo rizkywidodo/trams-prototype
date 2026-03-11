@@ -1,4 +1,4 @@
-import { useState, useMemo, useRef } from "react";
+import { useState, useMemo, useRef, useEffect } from "react";
 import { useNavigate } from "react-router-dom";
 import { Check, MapPin, Clock, Send, Pen } from "lucide-react";
 import { STATIONS } from "@/data/stations";
