@@ -260,7 +260,6 @@ const ShiftChecklist = ({
         );
       })}
     </div>
-    </div>
   );
 };
 
