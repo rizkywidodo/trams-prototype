@@ -257,7 +257,9 @@ const ShiftChecklist = ({
             })}
           </div>
         </div>
-      ))}
+        );
+      })}
+    </div>
     </div>
   );
 };
