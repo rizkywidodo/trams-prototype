@@ -1,7 +1,9 @@
 import { useState, useMemo, useRef, useEffect } from "react";
 import { useNavigate } from "react-router-dom";
-import { Check, MapPin, Clock, Send, Pen, Calendar } from "lucide-react";
+import { Check, MapPin, Clock, Send, Pen, Calendar, AlertTriangle, ChevronDown } from "lucide-react";
 import { Checkbox } from "@/components/ui/checkbox";
+import { Textarea } from "@/components/ui/textarea";
+import { Collapsible, CollapsibleTrigger, CollapsibleContent } from "@/components/ui/collapsible";
 import { STATIONS } from "@/data/stations";
 import {
   Select,
