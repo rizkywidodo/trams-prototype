@@ -1,4 +1,4 @@
-import { useState, useMemo, useRef, useEffect } from "react";
+import { useState, useMemo, useEffect } from "react";
 import { useNavigate } from "react-router-dom";
 import { Check, MapPin, Clock, Send, Pen, Calendar, AlertTriangle, ChevronDown } from "lucide-react";
 import { Checkbox } from "@/components/ui/checkbox";
@@ -96,67 +96,60 @@ const SHIFTS = [
 
 const ALL_ITEMS = PATROL_CATEGORIES.flatMap((c) => c.items);
 
-// Signature pad component
-const SignaturePad = ({ onClear, canvasRef }: { onClear: () => void; canvasRef: React.RefObject<HTMLCanvasElement> }) => {
-  const isDrawing = useRef(false);
+// Signature card with button + barcode authentication
+const SignatureCard = ({ label }: { label: string }) => {
+  const [signed, setSigned] = useState(false);
+  const [signedAt, setSignedAt] = useState<string>("");
 
-  const getPos = (e: React.MouseEvent | React.TouchEvent) => {
-    const canvas = canvasRef.current;
-    if (!canvas) return { x: 0, y: 0 };
-    const rect = canvas.getBoundingClientRect();
-    if ("touches" in e) {
-      return { x: e.touches[0].clientX - rect.left, y: e.touches[0].clientY - rect.top };
+  const barcodePattern = useMemo(() => {
+    const seed = label + signedAt;
+    const bars: number[] = [];
+    for (let i = 0; i < 36; i++) {
+      bars.push((seed.charCodeAt(i % seed.length) * (i + 1)) % 4 + 1);
     }
-    return { x: e.clientX - rect.left, y: e.clientY - rect.top };
-  };
+    return bars;
+  }, [label, signedAt]);
 
-  const startDraw = (e: React.MouseEvent | React.TouchEvent) => {
-    isDrawing.current = true;
-    const ctx = canvasRef.current?.getContext("2d");
-    if (!ctx) return;
-    const { x, y } = getPos(e);
-    ctx.beginPath();
-    ctx.moveTo(x, y);
+  const handleSign = () => {
+    const now = new Date().toISOString();
+    setSignedAt(now);
+    setSigned(true);
   };
-
-  const draw = (e: React.MouseEvent | React.TouchEvent) => {
-    if (!isDrawing.current) return;
-    const ctx = canvasRef.current?.getContext("2d");
-    if (!ctx) return;
-    const { x, y } = getPos(e);
-    ctx.lineWidth = 2;
-    ctx.lineCap = "round";
-    ctx.strokeStyle = "hsl(var(--foreground))";
-    ctx.lineTo(x, y);
-    ctx.stroke();
-  };
-
-  const endDraw = () => { isDrawing.current = false; };
 
   return (
-    <div className="space-y-2">
-      <div className="border-2 border-dashed border-border rounded-lg bg-muted/30 relative overflow-hidden">
-        <canvas
-          ref={canvasRef}
-          width={320}
-          height={120}
-          className="w-full cursor-crosshair touch-none"
-          onMouseDown={startDraw}
-          onMouseMove={draw}
-          onMouseUp={endDraw}
-          onMouseLeave={endDraw}
-          onTouchStart={startDraw}
-          onTouchMove={draw}
-          onTouchEnd={endDraw}
-        />
-        <div className="absolute bottom-2 left-3 flex items-center gap-1 text-muted-foreground/40 pointer-events-none">
+    <div className="rounded-xl border border-border bg-card p-4 shadow-sm text-center space-y-2.5">
+      <p className="text-xs font-bold text-foreground">{label}</p>
+      <p className="text-[11px] text-muted-foreground">Name</p>
+      {!signed ? (
+        <button
+          onClick={handleSign}
+          className="inline-flex items-center gap-2 px-4 py-2 rounded-lg bg-accent text-accent-foreground text-xs font-semibold hover:opacity-90 transition-opacity"
+        >
           <Pen className="h-3 w-3" />
-          <span className="text-[10px]">Tanda tangan di sini</span>
+          Signed here
+        </button>
+      ) : (
+        <div className="space-y-1.5">
+          <div className="flex items-center justify-center gap-[1px] py-1">
+            {barcodePattern.map((w, i) => (
+              <div
+                key={i}
+                className="bg-foreground rounded-[0.5px]"
+                style={{ width: `${w}px`, height: "32px" }}
+              />
+            ))}
+          </div>
+          <p className="text-[8px] text-muted-foreground font-mono break-all">
+            {btoa(label + "|" + signedAt).slice(0, 28)}
+          </p>
+          <button
+            onClick={() => setSigned(false)}
+            className="text-[10px] text-destructive hover:underline"
+          >
+            Reset
+          </button>
         </div>
-      </div>
-      <button onClick={onClear} className="text-xs text-destructive hover:underline">
-        Hapus tanda tangan
-      </button>
+      )}
     </div>
   );
 };
@@ -295,9 +288,6 @@ const FormPatrol = () => {
     return () => clearInterval(timer);
   }, []);
 
-  const sigPetugas = useRef<HTMLCanvasElement>(null);
-  const sigKepala = useRef<HTMLCanvasElement>(null);
-
   const toggleCheck = (shiftId: string, itemId: string) => {
     setChecks((prev) => {
       const sc = prev[shiftId] || {};
@@ -325,11 +315,6 @@ const FormPatrol = () => {
     return count;
   }, [checks]);
   const progress = totalCells > 0 ? Math.round((filledCells / totalCells) * 100) : 0;
-
-  const clearCanvas = (ref: React.RefObject<HTMLCanvasElement>) => {
-    const ctx = ref.current?.getContext("2d");
-    if (ctx && ref.current) ctx.clearRect(0, 0, ref.current.width, ref.current.height);
-  };
 
   const handleSubmit = () => {
     navigate(`/daily-check/patrol/submitted?station=${selectedStation}`);
@@ -468,19 +453,11 @@ const FormPatrol = () => {
             <Pen className="h-4 w-4 text-accent" />
             Tanda Tangan
           </h3>
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-            <div>
-              <label className="text-xs font-semibold text-muted-foreground mb-2 block">
-                Petugas Patrol
-              </label>
-              <SignaturePad canvasRef={sigPetugas} onClear={() => clearCanvas(sigPetugas)} />
-            </div>
-            <div>
-              <label className="text-xs font-semibold text-muted-foreground mb-2 block">
-                Kepala Stasiun
-              </label>
-              <SignaturePad canvasRef={sigKepala} onClear={() => clearCanvas(sigKepala)} />
-            </div>
+          <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
+            <SignatureCard label="Station Head" />
+            <SignatureCard label="Area Authority 1" />
+            <SignatureCard label="Area Authority 2" />
+            <SignatureCard label="Area Authority 3" />
           </div>
         </div>
       </div>
