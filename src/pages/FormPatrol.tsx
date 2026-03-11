@@ -416,6 +416,7 @@ const FormPatrol = () => {
                   shiftId={shift.id}
                   checks={checks[shift.id] || {}}
                   toggleCheck={(itemId) => toggleCheck(shift.id, itemId)}
+                  toggleCategory={(catId) => toggleCategory(shift.id, catId)}
                 />
               </div>
             </TabsContent>
