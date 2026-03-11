@@ -330,18 +330,31 @@ const FormPatrol = () => {
         <h1 className="text-xl md:text-2xl font-extrabold text-foreground tracking-tight">
           Form Station Patrol
         </h1>
-        <div className="flex items-center gap-3 mt-3">
-          <MapPin className="h-3.5 w-3.5 text-accent" />
-          <Select value={selectedStation} onValueChange={setSelectedStation}>
-            <SelectTrigger className="w-56 h-9 text-sm">
-              <SelectValue />
-            </SelectTrigger>
-            <SelectContent>
-              {STATIONS.map((s) => (
-                <SelectItem key={s.id} value={s.id}>{s.name}</SelectItem>
-              ))}
-            </SelectContent>
-          </Select>
+        <div className="flex items-center flex-wrap gap-3 mt-3">
+          <div className="flex items-center gap-2">
+            <MapPin className="h-3.5 w-3.5 text-accent" />
+            <Select value={selectedStation} onValueChange={setSelectedStation}>
+              <SelectTrigger className="w-56 h-9 text-sm">
+                <SelectValue />
+              </SelectTrigger>
+              <SelectContent>
+                {STATIONS.map((s) => (
+                  <SelectItem key={s.id} value={s.id}>{s.name}</SelectItem>
+                ))}
+              </SelectContent>
+            </Select>
+          </div>
+          <div className="flex items-center gap-2 ml-auto">
+            <Calendar className="h-3.5 w-3.5 text-accent" />
+            <span className="text-xs font-medium text-foreground">
+              {currentTime.toLocaleDateString("id-ID", { weekday: "long", day: "numeric", month: "long", year: "numeric" })}
+            </span>
+            <span className="text-muted-foreground text-xs">•</span>
+            <Clock className="h-3.5 w-3.5 text-accent" />
+            <span className="text-xs font-semibold text-foreground font-mono">
+              {currentTime.toLocaleTimeString("id-ID", { hour: "2-digit", minute: "2-digit", second: "2-digit" })}
+            </span>
+          </div>
         </div>
       </div>
 
