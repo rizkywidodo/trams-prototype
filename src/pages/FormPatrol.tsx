@@ -268,6 +268,12 @@ const FormPatrol = () => {
   const [selectedStation, setSelectedStation] = useState<string>(STATIONS[0].id);
   const [activeShift, setActiveShift] = useState(SHIFTS[0].id);
   const [checks, setChecks] = useState<Record<string, Record<string, boolean>>>({});
+  const [currentTime, setCurrentTime] = useState(new Date());
+
+  useEffect(() => {
+    const timer = setInterval(() => setCurrentTime(new Date()), 1000);
+    return () => clearInterval(timer);
+  }, []);
 
   const sigPetugas = useRef<HTMLCanvasElement>(null);
   const sigKepala = useRef<HTMLCanvasElement>(null);
@@ -276,6 +282,17 @@ const FormPatrol = () => {
     setChecks((prev) => {
       const sc = prev[shiftId] || {};
       return { ...prev, [shiftId]: { ...sc, [itemId]: !sc[itemId] } };
+    });
+  };
+
+  const toggleCategory = (shiftId: string, catId: string) => {
+    setChecks((prev) => {
+      const sc = { ...(prev[shiftId] || {}) };
+      const cat = PATROL_CATEGORIES.find((c) => c.id === catId);
+      if (!cat) return prev;
+      const allChecked = cat.items.every((item) => sc[item.id]);
+      cat.items.forEach((item) => { sc[item.id] = !allChecked; });
+      return { ...prev, [shiftId]: sc };
     });
   };
 
