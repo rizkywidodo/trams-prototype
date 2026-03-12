@@ -14,6 +14,8 @@ import TenantList from "./pages/TenantList";
 import TenantCreation from "./pages/TenantCreation";
 import NotFound from "./pages/NotFound";
 import SignIn from "./pages/SignIn";
+import StationList from "./pages/StationList";
+import StationCreation from "./pages/StationCreation";
 
 const queryClient = new QueryClient();
 
@@ -33,7 +35,9 @@ const App = () => (
             <Route path="/daily-check/logbook" element={<Logbook />} />
             <Route path="/station/:stationId" element={<TenantChecklist />} />
             <Route path="/scheduling" element={<Scheduling />} />
-            <Route path="/master-data" element={<Navigate to="/master-data/tenants" replace />} />
+            <Route path="/master-data" element={<Navigate to="/master-data/stations" replace />} />
+            <Route path="/master-data/stations" element={<StationList />} />
+            <Route path="/master-data/stations/create" element={<StationCreation />} />
             <Route path="/master-data/tenants" element={<TenantList />} />
             <Route path="/master-data/tenants/create" element={<TenantCreation />} />
             <Route path="/sign-in" element={<SignIn />} />
