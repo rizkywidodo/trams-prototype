@@ -16,6 +16,7 @@ import NotFound from "./pages/NotFound";
 import SignIn from "./pages/SignIn";
 import StationList from "./pages/StationList";
 import StationCreation from "./pages/StationCreation";
+import StationDetail from "./pages/StationDetail";
 
 const queryClient = new QueryClient();
 
@@ -38,6 +39,7 @@ const App = () => (
             <Route path="/master-data" element={<Navigate to="/master-data/stations" replace />} />
             <Route path="/master-data/stations" element={<StationList />} />
             <Route path="/master-data/stations/create" element={<StationCreation />} />
+            <Route path="/master-data/stations/:stationId" element={<StationDetail />} />
             <Route path="/master-data/tenants" element={<TenantList />} />
             <Route path="/master-data/tenants/create" element={<TenantCreation />} />
             <Route path="/sign-in" element={<SignIn />} />

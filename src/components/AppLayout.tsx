@@ -4,9 +4,6 @@ import {
   LayoutDashboard,
   ClipboardCheck,
   CalendarCheck,
-  FileText,
-  Megaphone,
-  GraduationCap,
   Settings,
   LogOut,
   Search,
@@ -37,9 +34,6 @@ const NAV_ITEMS = [
   { to: "/dashboard", label: "Dashboard", icon: LayoutDashboard, disabled: true },
   { to: "/daily-check", label: "Daily Check", icon: ClipboardCheck, expandable: "daily-check" },
   { to: "/scheduling", label: "Scheduling", icon: CalendarCheck },
-  { to: "/evaluation", label: "Evaluation", icon: FileText, disabled: true },
-  { to: "/broadcast", label: "Broadcast", icon: Megaphone, disabled: true },
-  { to: "/training", label: "Training & Simulation", icon: GraduationCap, disabled: true },
   { to: "/master-data", label: "Master Data", icon: Settings, expandable: "master-data" },
 ];
 
@@ -58,6 +52,7 @@ const AppLayout = ({ children }: { children: React.ReactNode }) => {
     if (location.pathname === "/master-data/tenants/create") return "Tenant Creation";
     if (location.pathname.startsWith("/master-data/tenants")) return "Master Data — Tenant";
     if (location.pathname === "/master-data/stations/create") return "Station Creation";
+    if (location.pathname.match(/^\/master-data\/stations\/[^/]+$/) && location.pathname !== "/master-data/stations") return "Detail Stasiun";
     if (location.pathname.startsWith("/master-data/stations")) return "Master Data — Station";
     if (location.pathname.startsWith("/master-data")) return "Master Data";
     if (location.pathname.startsWith("/scheduling")) return "Scheduling";

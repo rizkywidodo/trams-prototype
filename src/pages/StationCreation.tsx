@@ -202,6 +202,7 @@ const StationCreation = () => {
                   <SelectContent>
                     <SelectItem value="elevated">Elevated</SelectItem>
                     <SelectItem value="underground">Underground</SelectItem>
+                    <SelectItem value="khusus">Khusus</SelectItem>
                   </SelectContent>
                 </Select>
               </div>
