@@ -151,11 +151,13 @@ const StationDetail = () => {
               <span className="text-sm font-semibold text-card-foreground">Jenis Stasiun</span>
             </div>
             <Badge variant="outline" className={`capitalize text-xs font-bold ${
-              station.type === "underground" ? "border-primary/40 text-primary" :
-              station.type === "khusus" ? "border-amber-400 text-amber-600" : ""
+              station.type === "underground" ? "border-primary/40 text-primary" : ""
             }`}>
               {station.type}
             </Badge>
+            {station.isKhusus && (
+              <Badge className="ml-2 bg-amber-50 text-amber-600 border-amber-200 text-xs font-bold">Khusus</Badge>
+            )}
           </CardContent>
         </Card>
         <Card>

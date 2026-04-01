@@ -11,7 +11,6 @@ const STATION_TYPES = [
   { value: "all", label: "Semua Tipe" },
   { value: "elevated", label: "Elevated" },
   { value: "underground", label: "Underground" },
-  { value: "khusus", label: "Khusus" },
 ];
 
 const REGIONS = [
@@ -21,8 +20,8 @@ const REGIONS = [
   { value: "3", label: "Region 3" },
 ];
 
-const getStationType = (id: string, i: number): "elevated" | "underground" | "khusus" => {
-  if (id === "dukuh-atas-bni" || id === "lebak-bulus") return "khusus";
+const getStationType = (id: string, i: number): "elevated" | "underground" => {
+  if (id === "dukuh-atas-bni" || id === "lebak-bulus") return "underground";
   const types: ("elevated" | "underground")[] = ["elevated", "underground"];
   return types[i % 2];
 };
@@ -35,6 +34,7 @@ const getStationSize = (id: string, i: number): "Besar" | "Kecil" => {
 const STATION_DATA = STATIONS.map((s, i) => ({
   ...s,
   type: getStationType(s.id, i),
+  isKhusus: s.id === "dukuh-atas-bni" || s.id === "lebak-bulus",
   size: getStationSize(s.id, i),
   region: String((i % 3) + 1),
   address: `Jl. ${s.name}, Jakarta ${i % 2 === 0 ? "Selatan" : "Pusat"}`,
@@ -134,8 +134,7 @@ const StationList = () => {
                   </div>
                    <div className="flex items-center gap-2 mt-2.5 flex-wrap">
                      <Badge variant="outline" className={`text-[10px] font-bold capitalize ${
-                       station.type === "underground" ? "border-primary/40 text-primary" :
-                       station.type === "khusus" ? "border-amber-400 text-amber-600" : ""
+                       station.type === "underground" ? "border-primary/40 text-primary" : ""
                      }`}>
                        {station.type}
                      </Badge>
