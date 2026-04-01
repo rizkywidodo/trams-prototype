@@ -52,6 +52,7 @@ const AppLayout = ({ children }: { children: React.ReactNode }) => {
     if (location.pathname === "/master-data/tenants/create") return "Tenant Creation";
     if (location.pathname.startsWith("/master-data/tenants")) return "Master Data — Tenant";
     if (location.pathname === "/master-data/stations/create") return "Station Creation";
+    if (location.pathname.match(/^\/master-data\/stations\/[^/]+$/) && location.pathname !== "/master-data/stations") return "Detail Stasiun";
     if (location.pathname.startsWith("/master-data/stations")) return "Master Data — Station";
     if (location.pathname.startsWith("/master-data")) return "Master Data";
     if (location.pathname.startsWith("/scheduling")) return "Scheduling";

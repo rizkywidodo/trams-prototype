@@ -132,14 +132,17 @@ const StationList = () => {
                     <MapPin className="h-3.5 w-3.5 text-[hsl(var(--accent))]" />
                     <span className="text-xs text-muted-foreground truncate">{station.address}</span>
                   </div>
-                  <div className="flex items-center gap-2 mt-2.5 flex-wrap">
-                    <Badge variant="outline" className="text-[10px] font-bold capitalize">
-                      {station.type}
-                    </Badge>
-                    <Badge variant="secondary" className="text-[10px] font-bold">
-                      Region {station.region}
-                    </Badge>
-                  </div>
+                   <div className="flex items-center gap-2 mt-2.5 flex-wrap">
+                     <Badge variant="outline" className={`text-[10px] font-bold capitalize ${
+                       station.type === "underground" ? "border-primary/40 text-primary" :
+                       station.type === "khusus" ? "border-amber-400 text-amber-600" : ""
+                     }`}>
+                       {station.type}
+                     </Badge>
+                     <Badge variant="secondary" className="text-[10px] font-bold">
+                       Region {station.region}
+                     </Badge>
+                   </div>
                   <div className="flex items-center gap-3 mt-2.5 text-[11px] text-muted-foreground">
                     <span>{station.personnelCount} personel</span>
                     <span>•</span>
