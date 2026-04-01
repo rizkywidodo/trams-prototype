@@ -37,9 +37,6 @@ const NAV_ITEMS = [
   { to: "/dashboard", label: "Dashboard", icon: LayoutDashboard, disabled: true },
   { to: "/daily-check", label: "Daily Check", icon: ClipboardCheck, expandable: "daily-check" },
   { to: "/scheduling", label: "Scheduling", icon: CalendarCheck },
-  { to: "/evaluation", label: "Evaluation", icon: FileText, disabled: true },
-  { to: "/broadcast", label: "Broadcast", icon: Megaphone, disabled: true },
-  { to: "/training", label: "Training & Simulation", icon: GraduationCap, disabled: true },
   { to: "/master-data", label: "Master Data", icon: Settings, expandable: "master-data" },
 ];
 
