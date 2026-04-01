@@ -11,6 +11,7 @@ const STATION_TYPES = [
   { value: "all", label: "Semua Tipe" },
   { value: "elevated", label: "Elevated" },
   { value: "underground", label: "Underground" },
+  { value: "khusus", label: "Khusus" },
 ];
 
 const REGIONS = [
