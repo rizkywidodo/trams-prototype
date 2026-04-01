@@ -43,6 +43,7 @@ const App = () => (
             <Route path="/master-data/stations/:stationId" element={<StationDetail />} />
             <Route path="/master-data/tenants" element={<TenantList />} />
             <Route path="/master-data/tenants/create" element={<TenantCreation />} />
+            <Route path="/master-data/tenants/:tenantId" element={<TenantDetail />} />
             <Route path="/sign-in" element={<SignIn />} />
             <Route path="*" element={<NotFound />} />
           </Routes>
