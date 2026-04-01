@@ -134,8 +134,7 @@ const StationList = () => {
                   </div>
                    <div className="flex items-center gap-2 mt-2.5 flex-wrap">
                      <Badge variant="outline" className={`text-[10px] font-bold capitalize ${
-                       station.type === "underground" ? "border-primary/40 text-primary" :
-                       station.type === "khusus" ? "border-amber-400 text-amber-600" : ""
+                       station.type === "underground" ? "border-primary/40 text-primary" : ""
                      }`}>
                        {station.type}
                      </Badge>
