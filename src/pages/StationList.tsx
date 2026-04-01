@@ -20,8 +20,8 @@ const REGIONS = [
   { value: "3", label: "Region 3" },
 ];
 
-const getStationType = (id: string, i: number): "elevated" | "underground" | "khusus" => {
-  if (id === "dukuh-atas-bni" || id === "lebak-bulus") return "khusus";
+const getStationType = (id: string, i: number): "elevated" | "underground" => {
+  if (id === "dukuh-atas-bni" || id === "lebak-bulus") return "underground";
   const types: ("elevated" | "underground")[] = ["elevated", "underground"];
   return types[i % 2];
 };
