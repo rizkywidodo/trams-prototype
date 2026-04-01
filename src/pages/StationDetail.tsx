@@ -45,7 +45,7 @@ STATIONS.forEach((s, i) => {
     })),
     frontliner: Array.from({ length: flCount }, (_, j) => ({
       name: FRONTLINER_NAMES[(i + j) % FRONTLINER_NAMES.length],
-      role: "Customer Service",
+      role: "Frontliner",
       shift: SHIFTS[j % SHIFTS.length],
       phone: `0824-${String(5678 + i + j).padStart(4, "0")}-${String(9012 + j).padStart(4, "0")}`,
     })),
