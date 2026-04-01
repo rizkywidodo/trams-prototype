@@ -21,15 +21,28 @@ const REGIONS = [
   { value: "3", label: "Region 3" },
 ];
 
-// Mock extended station data with type and region
+const getStationType = (id: string, i: number): "elevated" | "underground" | "khusus" => {
+  if (id === "dukuh-atas-bni" || id === "lebak-bulus") return "khusus";
+  const types: ("elevated" | "underground")[] = ["elevated", "underground"];
+  return types[i % 2];
+};
+
+const getStationSize = (id: string, i: number): "Besar" | "Kecil" => {
+  if (id === "dukuh-atas-bni" || id === "lebak-bulus") return "Besar";
+  return i % 2 === 0 ? "Besar" : "Kecil";
+};
+
 const STATION_DATA = STATIONS.map((s, i) => ({
   ...s,
-  type: i % 3 === 0 ? "underground" : "elevated" as "elevated" | "underground",
+  type: getStationType(s.id, i),
+  size: getStationSize(s.id, i),
   region: String((i % 3) + 1),
-  address: `Jl. ${s.name}, Jakarta Selatan`,
+  address: `Jl. ${s.name}, Jakarta ${i % 2 === 0 ? "Selatan" : "Pusat"}`,
   personnelCount: Math.floor(Math.random() * 20) + 5,
   tenantCount: Math.floor(Math.random() * 8) + 1,
 }));
+
+export { STATION_DATA };
 
 const StationList = () => {
   const navigate = useNavigate();
