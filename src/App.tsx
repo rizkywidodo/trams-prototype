@@ -17,6 +17,7 @@ import SignIn from "./pages/SignIn";
 import StationList from "./pages/StationList";
 import StationCreation from "./pages/StationCreation";
 import StationDetail from "./pages/StationDetail";
+import TenantDetail from "./pages/TenantDetail";
 
 const queryClient = new QueryClient();
 
