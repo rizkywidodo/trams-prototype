@@ -34,6 +34,7 @@ const getStationSize = (id: string, i: number): "Besar" | "Kecil" => {
 const STATION_DATA = STATIONS.map((s, i) => ({
   ...s,
   type: getStationType(s.id, i),
+  isKhusus: s.id === "dukuh-atas-bni" || s.id === "lebak-bulus",
   size: getStationSize(s.id, i),
   region: String((i % 3) + 1),
   address: `Jl. ${s.name}, Jakarta ${i % 2 === 0 ? "Selatan" : "Pusat"}`,
