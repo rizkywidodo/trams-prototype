@@ -16,6 +16,7 @@ import NotFound from "./pages/NotFound";
 import SignIn from "./pages/SignIn";
 import StationList from "./pages/StationList";
 import StationCreation from "./pages/StationCreation";
+import StationDetail from "./pages/StationDetail";
 
 const queryClient = new QueryClient();
 
