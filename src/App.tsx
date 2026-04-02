@@ -42,6 +42,7 @@ const App = () => (
             <Route path="/master-data" element={<Navigate to="/master-data/stations" replace />} />
             <Route path="/master-data/stations" element={<StationList />} />
             <Route path="/master-data/personnel" element={<PersonnelList />} />
+            <Route path="/master-data/personnel/:personnelId" element={<PersonnelDetail />} />
             <Route path="/master-data/stations/create" element={<StationCreation />} />
             <Route path="/master-data/stations/:stationId" element={<StationDetail />} />
             <Route path="/master-data/tenants" element={<TenantList />} />
