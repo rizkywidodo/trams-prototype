@@ -6,54 +6,9 @@ import { Input } from "@/components/ui/input";
 import { Badge } from "@/components/ui/badge";
 import { Tabs, TabsList, TabsTrigger, TabsContent } from "@/components/ui/tabs";
 import {
-  Table,
-  TableBody,
-  TableCell,
-  TableHead,
-  TableHeader,
-  TableRow,
+  Table, TableBody, TableCell, TableHead, TableHeader, TableRow,
 } from "@/components/ui/table";
-
-type PersonnelCategory = "organik" | "frontliner" | "facility-care" | "p3k" | "security";
-
-interface Personnel {
-  id: string;
-  name: string;
-  nik: string;
-  station: string;
-  jabatan: string;
-  shift: "Pagi" | "Siang" | "Malam";
-  status: "Aktif" | "Cuti" | "Non-aktif";
-  category: PersonnelCategory;
-}
-
-const PERSONNEL_DATA: Personnel[] = [
-  // Organik
-  { id: "1", name: "Teguh Prabowo", nik: "MRT-2023-00031", station: "Dukuh Atas BNI", jabatan: "Station Manager", shift: "Pagi", status: "Aktif", category: "organik" },
-  { id: "2", name: "Hendra Kusuma", nik: "MRT-2023-00015", station: "Bundaran HI", jabatan: "Station Duty Section Head", shift: "Pagi", status: "Aktif", category: "organik" },
-  { id: "3", name: "Ahmad Fauzan", nik: "MRT-2024-00142", station: "Dukuh Atas BNI", jabatan: "Station Officer", shift: "Siang", status: "Aktif", category: "organik" },
-  { id: "4", name: "Rina Wulandari", nik: "MRT-2023-00078", station: "Lebak Bulus Grab", jabatan: "Planner", shift: "Pagi", status: "Aktif", category: "organik" },
-  { id: "5", name: "Bambang Setiawan", nik: "MRT-2024-00201", station: "Blok M BCA", jabatan: "Assistant Planner", shift: "Pagi", status: "Aktif", category: "organik" },
-  { id: "6", name: "Siti Nurhaliza", nik: "MRT-2023-00055", station: "Senayan", jabatan: "Head", shift: "Pagi", status: "Cuti", category: "organik" },
-  // Frontliner
-  { id: "7", name: "Dian Pratama", nik: "MRT-2024-00310", station: "Dukuh Atas BNI", jabatan: "JS Leader", shift: "Pagi", status: "Aktif", category: "frontliner" },
-  { id: "8", name: "Fajar Hidayat", nik: "MRT-2024-00311", station: "Bundaran HI", jabatan: "Junior Staff", shift: "Siang", status: "Aktif", category: "frontliner" },
-  { id: "9", name: "Lestari Dewi", nik: "MRT-2024-00312", station: "Lebak Bulus Grab", jabatan: "Junior Staff", shift: "Pagi", status: "Aktif", category: "frontliner" },
-  { id: "10", name: "Rudi Hermawan", nik: "MRT-2024-00313", station: "Blok M BCA", jabatan: "JS Leader", shift: "Malam", status: "Aktif", category: "frontliner" },
-  { id: "11", name: "Yuni Astuti", nik: "MRT-2024-00314", station: "Senayan", jabatan: "Junior Staff", shift: "Siang", status: "Non-aktif", category: "frontliner" },
-  // Facility Care
-  { id: "12", name: "Andi Saputra", nik: "MRT-2023-00401", station: "Dukuh Atas BNI", jabatan: "Facility Care Staff", shift: "Pagi", status: "Aktif", category: "facility-care" },
-  { id: "13", name: "Budi Santoso", nik: "MRT-2023-00402", station: "Bundaran HI", jabatan: "Facility Care Lead", shift: "Siang", status: "Aktif", category: "facility-care" },
-  { id: "14", name: "Citra Melati", nik: "MRT-2024-00403", station: "Lebak Bulus Grab", jabatan: "Facility Care Staff", shift: "Malam", status: "Aktif", category: "facility-care" },
-  // P3K
-  { id: "15", name: "Dr. Putri Ayu", nik: "MRT-2023-00501", station: "Dukuh Atas BNI", jabatan: "Paramedis", shift: "Pagi", status: "Aktif", category: "p3k" },
-  { id: "16", name: "Wahyu Pratama", nik: "MRT-2024-00502", station: "Lebak Bulus Grab", jabatan: "Paramedis", shift: "Siang", status: "Aktif", category: "p3k" },
-  // Security
-  { id: "17", name: "Agus Kurniawan", nik: "MRT-2023-00601", station: "Dukuh Atas BNI", jabatan: "Kepala Satpam", shift: "Pagi", status: "Aktif", category: "security" },
-  { id: "18", name: "Joko Widodo", nik: "MRT-2023-00602", station: "Bundaran HI", jabatan: "Satpam", shift: "Malam", status: "Aktif", category: "security" },
-  { id: "19", name: "Surya Darma", nik: "MRT-2024-00603", station: "Blok M BCA", jabatan: "Satpam", shift: "Siang", status: "Aktif", category: "security" },
-  { id: "20", name: "Irfan Maulana", nik: "MRT-2024-00604", station: "Senayan", jabatan: "Satpam", shift: "Pagi", status: "Cuti", category: "security" },
-];
+import { PERSONNEL_DATA, CATEGORY_LABELS, type PersonnelCategory } from "@/data/personnel";
 
 const TABS: { value: PersonnelCategory; label: string }[] = [
   { value: "organik", label: "Organik" },
@@ -77,6 +32,7 @@ const shiftColor = (shift: string) => {
     case "Pagi": return "bg-sky-100 text-sky-700 border-sky-200";
     case "Siang": return "bg-orange-100 text-orange-700 border-orange-200";
     case "Malam": return "bg-indigo-100 text-indigo-700 border-indigo-200";
+    case "Office Hour": return "bg-teal-100 text-teal-700 border-teal-200";
     default: return "";
   }
 };
@@ -85,6 +41,7 @@ const getInitials = (name: string) =>
   name.split(" ").map((n) => n[0]).join("").slice(0, 2).toUpperCase();
 
 const PersonnelList = () => {
+  const navigate = useNavigate();
   const [searchParams, setSearchParams] = useSearchParams();
   const activeTab = (searchParams.get("tab") as PersonnelCategory) || "organik";
   const [search, setSearch] = useState("");
@@ -118,7 +75,6 @@ const PersonnelList = () => {
 
   return (
     <div className="p-6 max-w-7xl mx-auto space-y-6">
-      {/* Header */}
       <div className="flex items-start justify-between">
         <div>
           <h1 className="text-2xl font-bold text-foreground">Personil</h1>
@@ -130,7 +86,6 @@ const PersonnelList = () => {
         </Button>
       </div>
 
-      {/* Tabs */}
       <Tabs value={activeTab} onValueChange={setTab}>
         <TabsList className="bg-muted/50 h-auto flex-wrap gap-1 p-1">
           {TABS.map((tab) => (
@@ -146,7 +101,6 @@ const PersonnelList = () => {
           ))}
         </TabsList>
 
-        {/* Search */}
         <div className="relative mt-4 max-w-md">
           <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
           <Input
@@ -157,7 +111,6 @@ const PersonnelList = () => {
           />
         </div>
 
-        {/* Table content for each tab */}
         {TABS.map((tab) => (
           <TabsContent key={tab.value} value={tab.value} className="mt-4">
             <div className="rounded-lg border border-border bg-card overflow-hidden">
@@ -182,7 +135,7 @@ const PersonnelList = () => {
                     </TableRow>
                   ) : (
                     filtered.map((p) => (
-                      <TableRow key={p.id} className="hover:bg-muted/20">
+                      <TableRow key={p.id} className="hover:bg-muted/20 cursor-pointer" onClick={() => navigate(`/master-data/personnel/${p.id}`)}>
                         <TableCell>
                           <div className="flex items-center gap-3">
                             <div className="h-8 w-8 rounded-full bg-primary/10 flex items-center justify-center shrink-0">
