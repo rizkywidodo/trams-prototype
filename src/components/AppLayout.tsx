@@ -26,7 +26,7 @@ const DAILY_CHECK_ITEMS = [
 
 const MASTER_DATA_ITEMS = [
   { to: "/master-data/stations", label: "Station", icon: Train },
-  { to: "/master-data/personnel", label: "Personnel", icon: Users, disabled: true },
+  { to: "/master-data/personnel", label: "Personnel", icon: Users },
   { to: "/master-data/tenants", label: "Tenant", icon: Store },
 ];
 
