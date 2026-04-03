@@ -326,6 +326,7 @@ const FormPatrol = () => {
   const progress = totalCells > 0 ? Math.round((filledCells / totalCells) * 100) : 0;
 
   const handleSubmit = () => {
+    clearDraft();
     navigate(`/daily-check/patrol/submitted?station=${selectedStation}`);
   };
 
