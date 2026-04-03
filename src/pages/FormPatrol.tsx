@@ -1,4 +1,5 @@
 import { useState, useMemo, useEffect } from "react";
+import { useAutoSave } from "@/hooks/use-auto-save";
 import { useNavigate } from "react-router-dom";
 import { Check, MapPin, Clock, Send, Pen, Calendar, AlertTriangle, ChevronDown } from "lucide-react";
 import { Checkbox } from "@/components/ui/checkbox";
