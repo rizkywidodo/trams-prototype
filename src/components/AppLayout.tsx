@@ -47,6 +47,7 @@ const AppLayout = ({ children }: { children: React.ReactNode }) => {
   const [masterDataOpen, setMasterDataOpen] = useState(isMasterDataActive);
 
   const getPageTitle = () => {
+    if (location.pathname.startsWith("/daily-check/history")) return "Riwayat Laporan Harian";
     if (location.pathname.startsWith("/daily-check/patrol")) return "Form Patrol";
     if (location.pathname.startsWith("/daily-check/logbook")) return "Logbook";
     if (location.pathname.startsWith("/station/")) return "Daily Check Tenant";
