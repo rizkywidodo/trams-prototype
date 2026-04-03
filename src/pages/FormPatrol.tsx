@@ -84,14 +84,14 @@ const PATROL_CATEGORIES: PatrolCategory[] = [
 ];
 
 const SHIFTS = [
-  { id: "handover-1", label: "Handover 06:00", shortLabel: "HO 06:00" },
-  { id: "checklist-1", label: "Checklist I", shortLabel: "CL I" },
-  { id: "handover-2", label: "Handover 14:00", shortLabel: "HO 14:00" },
-  { id: "checklist-2", label: "Checklist II", shortLabel: "CL II" },
-  { id: "handover-3", label: "Handover 22:00", shortLabel: "HO 22:00" },
-  { id: "checklist-3", label: "Checklist III", shortLabel: "CL III" },
-  { id: "window-closing", label: "Window Clearing", shortLabel: "WC" },
-  { id: "opening", label: "Opening 04:00", shortLabel: "Open" },
+  { id: "handover-1", label: "Handover 06:00", shortLabel: "Handover 06:00" },
+  { id: "checklist-1", label: "Checklist I", shortLabel: "Checklist I" },
+  { id: "handover-2", label: "Handover 14:00", shortLabel: "Handover 14:00" },
+  { id: "checklist-2", label: "Checklist II", shortLabel: "Checklist II" },
+  { id: "handover-3", label: "Handover 22:00", shortLabel: "Handover 22:00" },
+  { id: "checklist-3", label: "Checklist III", shortLabel: "Checklist III" },
+  { id: "window-closing", label: "Window Clearing", shortLabel: "Window Clearing" },
+  { id: "opening", label: "Opening 04:00", shortLabel: "Opening 04:00" },
 ];
 
 const ALL_ITEMS = PATROL_CATEGORIES.flatMap((c) => c.items);
