@@ -1,4 +1,5 @@
-import { useState } from "react";
+import { useState, useMemo } from "react";
+import { useAutoSave } from "@/hooks/use-auto-save";
 import { Plus, Trash2, Upload } from "lucide-react";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { STATIONS } from "@/data/stations";
@@ -64,6 +65,12 @@ const Logbook = () => {
     return init;
   });
 
+  const draftPayload = useMemo(() => ({ shiftData, selectedStation }), [shiftData, selectedStation]);
+  const { clearDraft } = useAutoSave("logbook", draftPayload, (saved) => {
+    setShiftData(saved.shiftData);
+    if (saved.selectedStation) setSelectedStation(saved.selectedStation);
+  });
+
   const updateEntry = (shift: string, section: keyof ShiftData, entryId: string, field: "time" | "description", value: string) => {
     setShiftData((prev) => ({
       ...prev,
@@ -97,6 +104,7 @@ const Logbook = () => {
   };
 
   const handleSubmit = () => {
+    clearDraft();
     toast.success("Logbook berhasil disimpan!", {
       description: `Stasiun ${STATIONS.find((s) => s.id === selectedStation)?.name}`,
     });

@@ -1,4 +1,5 @@
 import { useState, useMemo, useEffect } from "react";
+import { useAutoSave } from "@/hooks/use-auto-save";
 import { useNavigate } from "react-router-dom";
 import { Check, MapPin, Clock, Send, Pen, Calendar, AlertTriangle, ChevronDown } from "lucide-react";
 import { Checkbox } from "@/components/ui/checkbox";
@@ -281,7 +282,15 @@ const FormPatrol = () => {
   const [selectedStation, setSelectedStation] = useState<string>(STATIONS[0].id);
   const [activeShift, setActiveShift] = useState(SHIFTS[0].id);
   const [checks, setChecks] = useState<Record<string, Record<string, boolean>>>({});
+  const [notes, setNotes] = useState("");
   const [currentTime, setCurrentTime] = useState(new Date());
+
+  const draftPayload = useMemo(() => ({ checks, notes, selectedStation }), [checks, notes, selectedStation]);
+  const { clearDraft } = useAutoSave("form-patrol", draftPayload, (saved) => {
+    setChecks(saved.checks);
+    setNotes(saved.notes);
+    if (saved.selectedStation) setSelectedStation(saved.selectedStation);
+  });
 
   useEffect(() => {
     const timer = setInterval(() => setCurrentTime(new Date()), 1000);
@@ -317,6 +326,7 @@ const FormPatrol = () => {
   const progress = totalCells > 0 ? Math.round((filledCells / totalCells) * 100) : 0;
 
   const handleSubmit = () => {
+    clearDraft();
     navigate(`/daily-check/patrol/submitted?station=${selectedStation}`);
   };
 
@@ -440,6 +450,8 @@ const FormPatrol = () => {
             Tuliskan catatan untuk indikator yang tidak terceklis atau temuan lainnya.
           </p>
           <Textarea
+            value={notes}
+            onChange={(e) => setNotes(e.target.value)}
             placeholder="Tuliskan catatan temuan di sini..."
             className="min-h-[100px] text-sm"
           />
