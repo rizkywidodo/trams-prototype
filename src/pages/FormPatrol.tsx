@@ -450,6 +450,8 @@ const FormPatrol = () => {
             Tuliskan catatan untuk indikator yang tidak terceklis atau temuan lainnya.
           </p>
           <Textarea
+            value={notes}
+            onChange={(e) => setNotes(e.target.value)}
             placeholder="Tuliskan catatan temuan di sini..."
             className="min-h-[100px] text-sm"
           />

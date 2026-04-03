@@ -65,6 +65,12 @@ const Logbook = () => {
     return init;
   });
 
+  const draftPayload = useMemo(() => ({ shiftData, selectedStation }), [shiftData, selectedStation]);
+  const { clearDraft } = useAutoSave("logbook", draftPayload, (saved) => {
+    setShiftData(saved.shiftData);
+    if (saved.selectedStation) setSelectedStation(saved.selectedStation);
+  });
+
   const updateEntry = (shift: string, section: keyof ShiftData, entryId: string, field: "time" | "description", value: string) => {
     setShiftData((prev) => ({
       ...prev,
