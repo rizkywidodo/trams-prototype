@@ -104,6 +104,7 @@ const Logbook = () => {
   };
 
   const handleSubmit = () => {
+    clearDraft();
     toast.success("Logbook berhasil disimpan!", {
       description: `Stasiun ${STATIONS.find((s) => s.id === selectedStation)?.name}`,
     });
