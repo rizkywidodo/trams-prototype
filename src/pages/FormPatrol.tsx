@@ -281,7 +281,15 @@ const FormPatrol = () => {
   const [selectedStation, setSelectedStation] = useState<string>(STATIONS[0].id);
   const [activeShift, setActiveShift] = useState(SHIFTS[0].id);
   const [checks, setChecks] = useState<Record<string, Record<string, boolean>>>({});
+  const [notes, setNotes] = useState("");
   const [currentTime, setCurrentTime] = useState(new Date());
+
+  const draftPayload = useMemo(() => ({ checks, notes, selectedStation }), [checks, notes, selectedStation]);
+  const { clearDraft } = useAutoSave("form-patrol", draftPayload, (saved) => {
+    setChecks(saved.checks);
+    setNotes(saved.notes);
+    if (saved.selectedStation) setSelectedStation(saved.selectedStation);
+  });
 
   useEffect(() => {
     const timer = setInterval(() => setCurrentTime(new Date()), 1000);

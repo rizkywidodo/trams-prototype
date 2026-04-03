@@ -1,4 +1,5 @@
-import { useState } from "react";
+import { useState, useMemo } from "react";
+import { useAutoSave } from "@/hooks/use-auto-save";
 import { Plus, Trash2, Upload } from "lucide-react";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { STATIONS } from "@/data/stations";
