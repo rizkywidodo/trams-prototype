@@ -9,6 +9,7 @@ import TenantChecklist from "./pages/TenantChecklist";
 import FormPatrol from "./pages/FormPatrol";
 import PatrolSubmitted from "./pages/PatrolSubmitted";
 import Logbook from "./pages/Logbook";
+import DailyReportHistory from "./pages/DailyReportHistory";
 import Scheduling from "./pages/Scheduling";
 import TenantList from "./pages/TenantList";
 import TenantCreation from "./pages/TenantCreation";
@@ -37,6 +38,7 @@ const App = () => (
             <Route path="/daily-check/patrol" element={<FormPatrol />} />
             <Route path="/daily-check/patrol/submitted" element={<PatrolSubmitted />} />
             <Route path="/daily-check/logbook" element={<Logbook />} />
+            <Route path="/daily-check/history" element={<DailyReportHistory />} />
             <Route path="/station/:stationId" element={<TenantChecklist />} />
             <Route path="/scheduling" element={<Scheduling />} />
             <Route path="/master-data" element={<Navigate to="/master-data/stations" replace />} />
