@@ -227,7 +227,7 @@ const DailyReportHistory = () => {
                           patrolStatus === "submitted" ? "bg-green-500" : patrolStatus === "draft" ? "bg-yellow-500" : "bg-muted-foreground/30"
                         }`} title="Patrol" />
                         <div className={`h-1.5 w-1.5 rounded-full ${
-                          logbookStatus === "submitted" ? "bg-green-500" : logbookStatus === "draft" ? "bg-yellow-500" : "bg-muted-foreground/30"
+                          logbookStatus === "submitted" ? "bg-green-500" : "bg-muted-foreground/30"
                         }`} title="Logbook" />
                       </div>
                     )}
