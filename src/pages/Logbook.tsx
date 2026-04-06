@@ -1,6 +1,7 @@
 import { useState, useMemo } from "react";
 import { useAutoSave } from "@/hooks/use-auto-save";
-import { Plus, Trash2, Upload } from "lucide-react";
+import { usePatrolRecords, ALL_ITEMS, SHIFTS } from "@/hooks/use-patrol-records";
+import { Plus, Trash2, Upload, AlertTriangle, CheckCircle2 } from "lucide-react";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { STATIONS } from "@/data/stations";
 import {
@@ -11,6 +12,7 @@ import {
   SelectValue,
 } from "@/components/ui/select";
 import { toast } from "sonner";
+import { cn } from "@/lib/utils";
 
 interface LogEntry {
   id: string;
@@ -65,6 +67,13 @@ const Logbook = () => {
     return init;
   });
 
+  const { getCompletionStatus, addLogbookRecord, todayStr } = usePatrolRecords();
+
+  const patrolStatus = useMemo(
+    () => getCompletionStatus(selectedStation, todayStr, ALL_ITEMS.length, SHIFTS.length),
+    [getCompletionStatus, selectedStation, todayStr]
+  );
+
   const draftPayload = useMemo(() => ({ shiftData, selectedStation }), [shiftData, selectedStation]);
   const { clearDraft } = useAutoSave("logbook", draftPayload, (saved) => {
     setShiftData(saved.shiftData);
@@ -103,7 +112,16 @@ const Logbook = () => {
     }));
   };
 
+  const canSubmit = patrolStatus.complete;
+
   const handleSubmit = () => {
+    if (!canSubmit) {
+      toast.error("Form Patrol belum lengkap!", {
+        description: `${patrolStatus.checked}/${patrolStatus.total} item tercentang (${patrolStatus.percentage}%)`,
+      });
+      return;
+    }
+    addLogbookRecord(selectedStation, todayStr);
     clearDraft();
     toast.success("Logbook berhasil disimpan!", {
       description: `Stasiun ${STATIONS.find((s) => s.id === selectedStation)?.name}`,
@@ -133,6 +151,35 @@ const Logbook = () => {
           <button className="px-4 py-2 rounded-lg bg-accent text-accent-foreground text-sm font-semibold hover:opacity-90 transition-opacity">
             Export Logbook
           </button>
+        </div>
+      </div>
+
+      {/* Patrol completion status banner */}
+      <div className={cn(
+        "rounded-lg border p-4 mb-6 flex items-start gap-3",
+        canSubmit
+          ? "border-green-500/30 bg-green-500/5"
+          : "border-yellow-500/30 bg-yellow-500/5"
+      )}>
+        {canSubmit ? (
+          <CheckCircle2 className="h-5 w-5 text-green-600 shrink-0 mt-0.5" />
+        ) : (
+          <AlertTriangle className="h-5 w-5 text-yellow-600 shrink-0 mt-0.5" />
+        )}
+        <div>
+          <p className={cn("text-sm font-semibold", canSubmit ? "text-green-700" : "text-yellow-700")}>
+            {canSubmit ? "Form Patrol lengkap — Logbook siap di-submit" : "Form Patrol belum lengkap"}
+          </p>
+          <p className="text-xs text-muted-foreground mt-0.5">
+            {patrolStatus.checked}/{patrolStatus.total} item tercentang ({patrolStatus.percentage}%)
+            {!canSubmit && " — Lengkapi Form Patrol terlebih dahulu sebelum submit Logbook"}
+          </p>
+          <div className="h-1.5 bg-muted rounded-full overflow-hidden mt-2 max-w-xs">
+            <div
+              className={cn("h-full rounded-full transition-all", canSubmit ? "bg-green-500" : "bg-yellow-500")}
+              style={{ width: `${patrolStatus.percentage}%` }}
+            />
+          </div>
         </div>
       </div>
 
@@ -212,10 +259,22 @@ const Logbook = () => {
                 </button>
                 <button
                   onClick={handleSubmit}
-                  className="px-8 py-2.5 rounded-lg bg-primary text-primary-foreground text-sm font-semibold hover:opacity-90 transition-opacity"
+                  disabled={!canSubmit}
+                  className={cn(
+                    "px-8 py-2.5 rounded-lg text-sm font-semibold transition-all",
+                    canSubmit
+                      ? "bg-primary text-primary-foreground hover:opacity-90"
+                      : "bg-muted text-muted-foreground cursor-not-allowed"
+                  )}
                 >
-                  Submit
+                  Submit Logbook
                 </button>
+                {!canSubmit && (
+                  <span className="text-xs text-yellow-600 flex items-center gap-1">
+                    <AlertTriangle className="h-3 w-3" />
+                    Form Patrol harus lengkap
+                  </span>
+                )}
               </div>
             </div>
           </TabsContent>
