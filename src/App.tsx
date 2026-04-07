@@ -6,10 +6,8 @@ import { BrowserRouter, Routes, Route, Navigate } from "react-router-dom";
 import AppLayout from "./components/AppLayout";
 import StationSelect from "./pages/StationSelect";
 import TenantChecklist from "./pages/TenantChecklist";
-import FormPatrol from "./pages/FormPatrol";
+import DailyReport from "./pages/DailyReport";
 import PatrolSubmitted from "./pages/PatrolSubmitted";
-import Logbook from "./pages/Logbook";
-import DailyReportHistory from "./pages/DailyReportHistory";
 import Scheduling from "./pages/Scheduling";
 import TenantList from "./pages/TenantList";
 import TenantCreation from "./pages/TenantCreation";
@@ -35,10 +33,12 @@ const App = () => (
             <Route path="/" element={<Navigate to="/daily-check/tenant" replace />} />
             <Route path="/daily-check" element={<Navigate to="/daily-check/tenant" replace />} />
             <Route path="/daily-check/tenant" element={<StationSelect />} />
-            <Route path="/daily-check/patrol" element={<FormPatrol />} />
+            <Route path="/daily-check/report" element={<DailyReport />} />
             <Route path="/daily-check/patrol/submitted" element={<PatrolSubmitted />} />
-            <Route path="/daily-check/logbook" element={<Logbook />} />
-            <Route path="/daily-check/history" element={<DailyReportHistory />} />
+            {/* Redirects from old routes */}
+            <Route path="/daily-check/patrol" element={<Navigate to="/daily-check/report" replace />} />
+            <Route path="/daily-check/logbook" element={<Navigate to="/daily-check/report" replace />} />
+            <Route path="/daily-check/history" element={<Navigate to="/daily-check/report" replace />} />
             <Route path="/station/:stationId" element={<TenantChecklist />} />
             <Route path="/scheduling" element={<Scheduling />} />
             <Route path="/master-data" element={<Navigate to="/master-data/stations" replace />} />

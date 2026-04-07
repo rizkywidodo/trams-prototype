@@ -20,10 +20,8 @@ import {
 } from "lucide-react";
 
 const DAILY_CHECK_ITEMS = [
-  { to: "/daily-check/patrol", label: "Form Patrol", icon: Shield },
-  { to: "/daily-check/logbook", label: "Logbook", icon: BookOpen },
+  { to: "/daily-check/report", label: "Daily Report", icon: Shield },
   { to: "/daily-check/tenant", label: "Daily Check Tenant", icon: Store },
-  { to: "/daily-check/history", label: "Riwayat Laporan", icon: History },
 ];
 
 const MASTER_DATA_ITEMS = [
