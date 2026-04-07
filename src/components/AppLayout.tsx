@@ -11,19 +11,15 @@ import {
   ChevronDown,
   ChevronRight,
   Shield,
-  BookOpen,
   Store,
   Train,
   Users,
   Lock,
-  History,
 } from "lucide-react";
 
 const DAILY_CHECK_ITEMS = [
-  { to: "/daily-check/patrol", label: "Form Patrol", icon: Shield },
-  { to: "/daily-check/logbook", label: "Logbook", icon: BookOpen },
+  { to: "/daily-check/report", label: "Daily Report", icon: Shield },
   { to: "/daily-check/tenant", label: "Daily Check Tenant", icon: Store },
-  { to: "/daily-check/history", label: "Riwayat Laporan", icon: History },
 ];
 
 const MASTER_DATA_ITEMS = [
@@ -47,9 +43,8 @@ const AppLayout = ({ children }: { children: React.ReactNode }) => {
   const [masterDataOpen, setMasterDataOpen] = useState(isMasterDataActive);
 
   const getPageTitle = () => {
-    if (location.pathname.startsWith("/daily-check/history")) return "Riwayat Laporan Harian";
-    if (location.pathname.startsWith("/daily-check/patrol")) return "Form Patrol";
-    if (location.pathname.startsWith("/daily-check/logbook")) return "Logbook";
+    if (location.pathname.startsWith("/daily-check/report")) return "Daily Report";
+    if (location.pathname.startsWith("/station/")) return "Daily Check Tenant";
     if (location.pathname.startsWith("/station/")) return "Daily Check Tenant";
     if (location.pathname.startsWith("/daily-check/tenant") || location.pathname === "/") return "Daily Check Tenant";
     if (location.pathname === "/master-data/tenants/create") return "Tenant Creation";

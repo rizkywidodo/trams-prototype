@@ -74,7 +74,7 @@ export const SHIFTS = [
   { id: "handover-2", label: "Handover 14:00", shortLabel: "Handover 14:00" },
   { id: "checklist-2", label: "Checklist II", shortLabel: "Checklist II" },
   { id: "handover-3", label: "Handover 22:00", shortLabel: "Handover 22:00" },
-  { id: "checklist-3", label: "Checklist III", shortLabel: "Checklist III" },
+  
   { id: "window-closing", label: "Window Clearing", shortLabel: "Window Clearing" },
   { id: "opening", label: "Opening 04:00", shortLabel: "Opening 04:00" },
 ];
