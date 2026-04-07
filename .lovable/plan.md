@@ -1,29 +1,28 @@
-## Konsep Utama
-
-Form Patrol bisa diisi berkali-kali per hari (setiap entry = record terpisah dengan nama pengisi & waktu). Logbook hanya bisa di-submit kalau **semua checklist item** di Form Patrol sudah tercentang (gabungan dari semua entry patrol hari itu).
-
 ## Perubahan
 
-### 1. Data Layer — Patrol Records Store
-- Buat `src/hooks/use-patrol-records.ts` — hook untuk menyimpan & mengelola multiple patrol entries per hari per stasiun di localStorage
-- Setiap record: `{ id, stationId, date, shift, filledBy, filledAt, checklist: {...} }`
-- Fungsi: `addPatrolRecord()`, `getPatrolRecords(stationId, date)`, `getCompletionStatus(stationId, date)` (cek apakah semua item sudah tercentang dari gabungan semua records)
+### 1. Hapus Checklist III dari SHIFTS (`src/data/patrol.ts`)
+- Remove `{ id: "checklist-3", ... }` entry
 
-### 2. Update Form Patrol (`FormPatrol.tsx`)
-- Ubah flow: setiap submit = **tambah record baru** (bukan replace)
-- Tambah input "Nama Pengisi" di form
-- Setelah submit, data disimpan sebagai entry baru via hook
-- Tampilkan daftar patrol entries yang sudah ada hari ini (nama, waktu, jumlah item dicentang)
+### 2. Buat halaman gabungan Daily Report (`src/pages/DailyReport.tsx`)
+- Header: pilih stasiun, tanggal & jam
+- 2 tab utama: **Form Patrol** | **Logbook**
+  - Tab Patrol: isi checklist per shift (reuse ShiftChecklist component), nama pengisi, catatan, signature, submit patrol record
+  - Tab Logbook: isi catatan shift (gangguan, event, pekerjaan, keluhan), upload, submit logbook (gated by patrol 100%)
+- Di bawah form: **Riwayat** — list beberapa laporan terakhir (tanggal, status patrol, status logbook) yang bisa diklik
 
-### 3. Update Logbook (`Logbook.tsx`)
-- Sebelum tombol Submit: cek completion status Form Patrol via hook
-- Kalau belum 100%: tombol Submit disabled + warning message ("Form Patrol belum lengkap: 45/60 item tercentang")
-- Kalau sudah 100%: Submit enabled, proceed seperti biasa
+### 3. Extract shared components
+- `src/components/patrol/ShiftChecklist.tsx` — checklist per shift
+- `src/components/patrol/SignatureCard.tsx` — signature card  
+- `src/components/logbook/LogbookForm.tsx` — logbook sections
 
-### 4. Update Riwayat Laporan (`DailyReportHistory.tsx`)
-- Status di list/calendar sekarang reflect data real dari localStorage (patrol records + logbook drafts)
-- Klik tanggal → bisa lihat detail: daftar patrol entries + logbook data
+### 4. Update routing (`src/App.tsx`)
+- Remove: `/daily-check/patrol`, `/daily-check/logbook`, `/daily-check/history`
+- Add: `/daily-check/report`
+- Redirect old paths to `/daily-check/report`
 
-### 5. Patrol History Component
-- Buat komponen kecil yang menampilkan daftar patrol entries hari ini (bisa dilihat dari Form Patrol & dari Logbook)
-- Setiap entry: nama pengisi, waktu, jumlah item checked, bisa expand untuk lihat detail
+### 5. Update sidebar (`src/components/AppLayout.tsx`)
+- Replace 3 menu items (Form Patrol, Logbook, Riwayat Laporan) with 1: "Daily Report"
+- Update page title logic
+
+### 6. Clean up old files
+- Remove `src/pages/FormPatrol.tsx`, `src/pages/Logbook.tsx`, `src/pages/DailyReportHistory.tsx`
