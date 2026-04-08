@@ -9,7 +9,6 @@ import TenantChecklist from "./pages/TenantChecklist";
 import DailyReportList from "./pages/DailyReportList";
 import DailyReport from "./pages/DailyReport";
 import PatrolSubmitted from "./pages/PatrolSubmitted";
-import PatrolSubmitted from "./pages/PatrolSubmitted";
 import Scheduling from "./pages/Scheduling";
 import TenantList from "./pages/TenantList";
 import TenantCreation from "./pages/TenantCreation";
