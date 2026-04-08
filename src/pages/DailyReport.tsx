@@ -233,20 +233,25 @@ const DailyReport = () => {
     });
   };
 
-  // ── Recent reports ──
-  const recentDates = useMemo(() => {
-    const dateSet = new Set<string>();
-    records.filter((r) => r.stationId === selectedStation).forEach((r) => dateSet.add(r.date));
-    return Array.from(dateSet).sort().reverse().slice(0, 7);
-  }, [records, selectedStation]);
-
   return (
     <div className="min-h-[calc(100vh-4rem)] bg-background">
       {/* Header */}
       <div className="px-6 md:px-8 pt-6 pb-4">
+        <button
+          onClick={() => navigate("/daily-check/report")}
+          className="flex items-center gap-1.5 text-xs font-medium text-muted-foreground hover:text-foreground transition-colors mb-3"
+        >
+          <ArrowLeft className="h-3.5 w-3.5" />
+          Kembali ke Daftar Laporan
+        </button>
         <p className="text-muted-foreground text-[11px] font-semibold tracking-[0.2em] uppercase mb-1">Daily Report</p>
         <h1 className="text-xl md:text-2xl font-extrabold text-foreground tracking-tight">
-          Laporan Harian Stasiun
+          {format(parseISO(reportDate), "EEEE, dd MMMM yyyy", { locale: idLocale })}
+          {isToday && (
+            <span className="ml-2 text-sm font-bold text-accent bg-accent/10 px-2 py-0.5 rounded">
+              HARI INI
+            </span>
+          )}
         </h1>
         <div className="flex items-center flex-wrap gap-3 mt-3">
           <div className="flex items-center gap-2">
@@ -262,17 +267,14 @@ const DailyReport = () => {
               </SelectContent>
             </Select>
           </div>
-          <div className="flex items-center gap-2 ml-auto">
-            <Calendar className="h-3.5 w-3.5 text-accent" />
-            <span className="text-xs font-medium text-foreground">
-              {currentTime.toLocaleDateString("id-ID", { weekday: "long", day: "numeric", month: "long", year: "numeric" })}
-            </span>
-            <span className="text-muted-foreground text-xs">•</span>
-            <Clock className="h-3.5 w-3.5 text-accent" />
-            <span className="text-xs font-semibold text-foreground font-mono">
-              {currentTime.toLocaleTimeString("id-ID", { hour: "2-digit", minute: "2-digit", second: "2-digit" })}
-            </span>
-          </div>
+          {isToday && (
+            <div className="flex items-center gap-2 ml-auto">
+              <Clock className="h-3.5 w-3.5 text-accent" />
+              <span className="text-xs font-semibold text-foreground font-mono">
+                {currentTime.toLocaleTimeString("id-ID", { hour: "2-digit", minute: "2-digit", second: "2-digit" })}
+              </span>
+            </div>
+          )}
         </div>
       </div>
 
