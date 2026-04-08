@@ -168,7 +168,7 @@ const DailyReport = () => {
     }
     addRecord({
       stationId: selectedStation,
-      date: todayStr,
+      date: reportDate,
       shift: activeShift,
       filledBy: filledBy.trim(),
       filledAt: new Date().toISOString(),
