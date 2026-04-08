@@ -117,13 +117,13 @@ const DailyReport = () => {
 
   // ── Derived ──
   const todayRecords = useMemo(
-    () => getRecordsForDate(selectedStation, todayStr),
-    [getRecordsForDate, selectedStation, todayStr]
+    () => getRecordsForDate(selectedStation, reportDate),
+    [getRecordsForDate, selectedStation, reportDate]
   );
 
   const patrolStatus = useMemo(
-    () => getCompletionStatus(selectedStation, todayStr, ALL_ITEMS.length, SHIFTS.length),
-    [getCompletionStatus, selectedStation, todayStr]
+    () => getCompletionStatus(selectedStation, reportDate, ALL_ITEMS.length, SHIFTS.length),
+    [getCompletionStatus, selectedStation, reportDate]
   );
 
   const totalCells = ALL_ITEMS.length * SHIFTS.length;
