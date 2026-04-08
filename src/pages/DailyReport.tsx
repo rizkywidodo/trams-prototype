@@ -1,4 +1,5 @@
 import { useState, useMemo, useEffect } from "react";
+import { useParams, useSearchParams, useNavigate } from "react-router-dom";
 import { useAutoSave } from "@/hooks/use-auto-save";
 import { usePatrolRecords, ALL_ITEMS, SHIFTS } from "@/hooks/use-patrol-records";
 import { STATIONS } from "@/data/stations";
@@ -12,10 +13,10 @@ import {
 } from "@/components/ui/select";
 import {
   MapPin, Clock, Send, Pen, Calendar, AlertTriangle, ChevronDown, User,
-  History, Plus, Trash2, Upload, CheckCircle2, FileText, BookOpen,
+  History, Plus, Trash2, Upload, CheckCircle2, FileText, BookOpen, ArrowLeft,
 } from "lucide-react";
 import { cn } from "@/lib/utils";
-import { format } from "date-fns";
+import { format, parseISO } from "date-fns";
 import { id as idLocale } from "date-fns/locale";
 import { toast } from "sonner";
 
@@ -64,12 +65,20 @@ const LOGBOOK_SHIFT_TABS = ["Shift 1", "Shift 2", "Shift 3", "Cash Handling"];
 
 // ── Main Page ──
 const DailyReport = () => {
+  const { date: dateParam } = useParams<{ date: string }>();
+  const [searchParams] = useSearchParams();
+  const navigate = useNavigate();
+
   const {
     records, addRecord, getRecordsForDate, getCompletionStatus,
     addLogbookRecord, getLogbookForDate, todayStr,
   } = usePatrolRecords();
 
-  const [selectedStation, setSelectedStation] = useState<string>(STATIONS[0].id);
+  const reportDate = dateParam || todayStr;
+  const isToday = reportDate === todayStr;
+  const stationFromUrl = searchParams.get("station");
+
+  const [selectedStation, setSelectedStation] = useState<string>(stationFromUrl || STATIONS[0].id);
   const [mainTab, setMainTab] = useState<"patrol" | "logbook">("patrol");
   const [currentTime, setCurrentTime] = useState(new Date());
 
