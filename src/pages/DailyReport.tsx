@@ -587,67 +587,6 @@ const DailyReport = () => {
         </Tabs>
       </div>
 
-      {/* ── Recent Reports ── */}
-      <div className="px-6 md:px-8 pb-8">
-        <div className="border-t border-border pt-6">
-          <h2 className="text-sm font-bold text-foreground mb-4 flex items-center gap-2">
-            <History className="h-4 w-4 text-muted-foreground" />
-            Laporan Sebelumnya
-          </h2>
-          {recentDates.length === 0 ? (
-            <div className="text-center py-8 text-muted-foreground">
-              <FileText className="h-8 w-8 mx-auto mb-2 opacity-40" />
-              <p className="text-sm">Belum ada laporan sebelumnya</p>
-            </div>
-          ) : (
-            <div className="space-y-2">
-              {recentDates.map((dateStr) => {
-                const patrol = getCompletionStatus(selectedStation, dateStr, ALL_ITEMS.length, SHIFTS.length);
-                const logbook = getLogbookForDate(selectedStation, dateStr);
-                const isToday = dateStr === todayStr;
-
-                return (
-                  <div
-                    key={dateStr}
-                    className="rounded-lg border border-border bg-card p-4 flex items-center justify-between hover:bg-muted/30 transition-colors cursor-pointer"
-                  >
-                    <div className="flex items-center gap-4">
-                      <div>
-                        <p className="text-sm font-medium text-foreground">
-                          {format(new Date(dateStr), "EEEE, dd MMM yyyy", { locale: idLocale })}
-                          {isToday && <span className="ml-2 text-[10px] font-bold text-primary">HARI INI</span>}
-                        </p>
-                        <div className="flex items-center gap-3 mt-1">
-                          <span className="text-[11px] text-muted-foreground flex items-center gap-1">
-                            <FileText className="h-3 w-3" />
-                            Patrol: {patrol.checked}/{patrol.total} ({patrol.percentage}%)
-                          </span>
-                          <span className="text-[11px] text-muted-foreground flex items-center gap-1">
-                            <BookOpen className="h-3 w-3" />
-                            Logbook: {logbook ? "Submitted" : "Belum"}
-                          </span>
-                        </div>
-                      </div>
-                    </div>
-                    <div className="flex items-center gap-2">
-                      {patrol.complete && logbook ? (
-                        <span className="text-[10px] font-bold px-2.5 py-1 rounded-full bg-green-500/15 text-green-600">
-                          <CheckCircle2 className="h-3 w-3 inline mr-1" />
-                          Complete
-                        </span>
-                      ) : patrol.checked > 0 ? (
-                        <span className="text-[10px] font-bold px-2.5 py-1 rounded-full bg-yellow-500/15 text-yellow-600">
-                          Draft
-                        </span>
-                      ) : null}
-                    </div>
-                  </div>
-                );
-              })}
-            </div>
-          )}
-        </div>
-      </div>
     </div>
   );
 };

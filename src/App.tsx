@@ -6,7 +6,9 @@ import { BrowserRouter, Routes, Route, Navigate } from "react-router-dom";
 import AppLayout from "./components/AppLayout";
 import StationSelect from "./pages/StationSelect";
 import TenantChecklist from "./pages/TenantChecklist";
+import DailyReportList from "./pages/DailyReportList";
 import DailyReport from "./pages/DailyReport";
+import PatrolSubmitted from "./pages/PatrolSubmitted";
 import PatrolSubmitted from "./pages/PatrolSubmitted";
 import Scheduling from "./pages/Scheduling";
 import TenantList from "./pages/TenantList";
@@ -33,7 +35,8 @@ const App = () => (
             <Route path="/" element={<Navigate to="/daily-check/tenant" replace />} />
             <Route path="/daily-check" element={<Navigate to="/daily-check/tenant" replace />} />
             <Route path="/daily-check/tenant" element={<StationSelect />} />
-            <Route path="/daily-check/report" element={<DailyReport />} />
+            <Route path="/daily-check/report" element={<DailyReportList />} />
+            <Route path="/daily-check/report/:date" element={<DailyReport />} />
             <Route path="/daily-check/patrol/submitted" element={<PatrolSubmitted />} />
             {/* Redirects from old routes */}
             <Route path="/daily-check/patrol" element={<Navigate to="/daily-check/report" replace />} />
