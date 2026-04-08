@@ -1,4 +1,5 @@
 import { useState, useMemo, useEffect } from "react";
+import { useParams, useSearchParams, useNavigate } from "react-router-dom";
 import { useAutoSave } from "@/hooks/use-auto-save";
 import { usePatrolRecords, ALL_ITEMS, SHIFTS } from "@/hooks/use-patrol-records";
 import { STATIONS } from "@/data/stations";
@@ -12,10 +13,10 @@ import {
 } from "@/components/ui/select";
 import {
   MapPin, Clock, Send, Pen, Calendar, AlertTriangle, ChevronDown, User,
-  History, Plus, Trash2, Upload, CheckCircle2, FileText, BookOpen,
+  History, Plus, Trash2, Upload, CheckCircle2, FileText, BookOpen, ArrowLeft,
 } from "lucide-react";
 import { cn } from "@/lib/utils";
-import { format } from "date-fns";
+import { format, parseISO } from "date-fns";
 import { id as idLocale } from "date-fns/locale";
 import { toast } from "sonner";
 
@@ -64,12 +65,20 @@ const LOGBOOK_SHIFT_TABS = ["Shift 1", "Shift 2", "Shift 3", "Cash Handling"];
 
 // ── Main Page ──
 const DailyReport = () => {
+  const { date: dateParam } = useParams<{ date: string }>();
+  const [searchParams] = useSearchParams();
+  const navigate = useNavigate();
+
   const {
     records, addRecord, getRecordsForDate, getCompletionStatus,
     addLogbookRecord, getLogbookForDate, todayStr,
   } = usePatrolRecords();
 
-  const [selectedStation, setSelectedStation] = useState<string>(STATIONS[0].id);
+  const reportDate = dateParam || todayStr;
+  const isToday = reportDate === todayStr;
+  const stationFromUrl = searchParams.get("station");
+
+  const [selectedStation, setSelectedStation] = useState<string>(stationFromUrl || STATIONS[0].id);
   const [mainTab, setMainTab] = useState<"patrol" | "logbook">("patrol");
   const [currentTime, setCurrentTime] = useState(new Date());
 
@@ -108,13 +117,13 @@ const DailyReport = () => {
 
   // ── Derived ──
   const todayRecords = useMemo(
-    () => getRecordsForDate(selectedStation, todayStr),
-    [getRecordsForDate, selectedStation, todayStr]
+    () => getRecordsForDate(selectedStation, reportDate),
+    [getRecordsForDate, selectedStation, reportDate]
   );
 
   const patrolStatus = useMemo(
-    () => getCompletionStatus(selectedStation, todayStr, ALL_ITEMS.length, SHIFTS.length),
-    [getCompletionStatus, selectedStation, todayStr]
+    () => getCompletionStatus(selectedStation, reportDate, ALL_ITEMS.length, SHIFTS.length),
+    [getCompletionStatus, selectedStation, reportDate]
   );
 
   const totalCells = ALL_ITEMS.length * SHIFTS.length;
@@ -159,7 +168,7 @@ const DailyReport = () => {
     }
     addRecord({
       stationId: selectedStation,
-      date: todayStr,
+      date: reportDate,
       shift: activeShift,
       filledBy: filledBy.trim(),
       filledAt: new Date().toISOString(),
@@ -217,27 +226,32 @@ const DailyReport = () => {
       });
       return;
     }
-    addLogbookRecord(selectedStation, todayStr);
+    addLogbookRecord(selectedStation, reportDate);
     clearLogbookDraft();
     toast.success("Logbook berhasil disimpan!", {
       description: `Stasiun ${STATIONS.find((s) => s.id === selectedStation)?.name}`,
     });
   };
 
-  // ── Recent reports ──
-  const recentDates = useMemo(() => {
-    const dateSet = new Set<string>();
-    records.filter((r) => r.stationId === selectedStation).forEach((r) => dateSet.add(r.date));
-    return Array.from(dateSet).sort().reverse().slice(0, 7);
-  }, [records, selectedStation]);
-
   return (
     <div className="min-h-[calc(100vh-4rem)] bg-background">
       {/* Header */}
       <div className="px-6 md:px-8 pt-6 pb-4">
+        <button
+          onClick={() => navigate("/daily-check/report")}
+          className="flex items-center gap-1.5 text-xs font-medium text-muted-foreground hover:text-foreground transition-colors mb-3"
+        >
+          <ArrowLeft className="h-3.5 w-3.5" />
+          Kembali ke Daftar Laporan
+        </button>
         <p className="text-muted-foreground text-[11px] font-semibold tracking-[0.2em] uppercase mb-1">Daily Report</p>
         <h1 className="text-xl md:text-2xl font-extrabold text-foreground tracking-tight">
-          Laporan Harian Stasiun
+          {format(parseISO(reportDate), "EEEE, dd MMMM yyyy", { locale: idLocale })}
+          {isToday && (
+            <span className="ml-2 text-sm font-bold text-accent bg-accent/10 px-2 py-0.5 rounded">
+              HARI INI
+            </span>
+          )}
         </h1>
         <div className="flex items-center flex-wrap gap-3 mt-3">
           <div className="flex items-center gap-2">
@@ -253,17 +267,14 @@ const DailyReport = () => {
               </SelectContent>
             </Select>
           </div>
-          <div className="flex items-center gap-2 ml-auto">
-            <Calendar className="h-3.5 w-3.5 text-accent" />
-            <span className="text-xs font-medium text-foreground">
-              {currentTime.toLocaleDateString("id-ID", { weekday: "long", day: "numeric", month: "long", year: "numeric" })}
-            </span>
-            <span className="text-muted-foreground text-xs">•</span>
-            <Clock className="h-3.5 w-3.5 text-accent" />
-            <span className="text-xs font-semibold text-foreground font-mono">
-              {currentTime.toLocaleTimeString("id-ID", { hour: "2-digit", minute: "2-digit", second: "2-digit" })}
-            </span>
-          </div>
+          {isToday && (
+            <div className="flex items-center gap-2 ml-auto">
+              <Clock className="h-3.5 w-3.5 text-accent" />
+              <span className="text-xs font-semibold text-foreground font-mono">
+                {currentTime.toLocaleTimeString("id-ID", { hour: "2-digit", minute: "2-digit", second: "2-digit" })}
+              </span>
+            </div>
+          )}
         </div>
       </div>
 
@@ -576,67 +587,6 @@ const DailyReport = () => {
         </Tabs>
       </div>
 
-      {/* ── Recent Reports ── */}
-      <div className="px-6 md:px-8 pb-8">
-        <div className="border-t border-border pt-6">
-          <h2 className="text-sm font-bold text-foreground mb-4 flex items-center gap-2">
-            <History className="h-4 w-4 text-muted-foreground" />
-            Laporan Sebelumnya
-          </h2>
-          {recentDates.length === 0 ? (
-            <div className="text-center py-8 text-muted-foreground">
-              <FileText className="h-8 w-8 mx-auto mb-2 opacity-40" />
-              <p className="text-sm">Belum ada laporan sebelumnya</p>
-            </div>
-          ) : (
-            <div className="space-y-2">
-              {recentDates.map((dateStr) => {
-                const patrol = getCompletionStatus(selectedStation, dateStr, ALL_ITEMS.length, SHIFTS.length);
-                const logbook = getLogbookForDate(selectedStation, dateStr);
-                const isToday = dateStr === todayStr;
-
-                return (
-                  <div
-                    key={dateStr}
-                    className="rounded-lg border border-border bg-card p-4 flex items-center justify-between hover:bg-muted/30 transition-colors cursor-pointer"
-                  >
-                    <div className="flex items-center gap-4">
-                      <div>
-                        <p className="text-sm font-medium text-foreground">
-                          {format(new Date(dateStr), "EEEE, dd MMM yyyy", { locale: idLocale })}
-                          {isToday && <span className="ml-2 text-[10px] font-bold text-primary">HARI INI</span>}
-                        </p>
-                        <div className="flex items-center gap-3 mt-1">
-                          <span className="text-[11px] text-muted-foreground flex items-center gap-1">
-                            <FileText className="h-3 w-3" />
-                            Patrol: {patrol.checked}/{patrol.total} ({patrol.percentage}%)
-                          </span>
-                          <span className="text-[11px] text-muted-foreground flex items-center gap-1">
-                            <BookOpen className="h-3 w-3" />
-                            Logbook: {logbook ? "Submitted" : "Belum"}
-                          </span>
-                        </div>
-                      </div>
-                    </div>
-                    <div className="flex items-center gap-2">
-                      {patrol.complete && logbook ? (
-                        <span className="text-[10px] font-bold px-2.5 py-1 rounded-full bg-green-500/15 text-green-600">
-                          <CheckCircle2 className="h-3 w-3 inline mr-1" />
-                          Complete
-                        </span>
-                      ) : patrol.checked > 0 ? (
-                        <span className="text-[10px] font-bold px-2.5 py-1 rounded-full bg-yellow-500/15 text-yellow-600">
-                          Draft
-                        </span>
-                      ) : null}
-                    </div>
-                  </div>
-                );
-              })}
-            </div>
-          )}
-        </div>
-      </div>
     </div>
   );
 };
