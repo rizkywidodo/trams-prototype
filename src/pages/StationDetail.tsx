@@ -194,7 +194,7 @@ const StationDetail = () => {
               </h3>
               <div className="flex items-center gap-2">
                 <Badge variant="outline" className="text-xs">{tenants.length}</Badge>
-                <button className="text-xs font-semibold text-primary hover:underline">+ Tambah</button>
+                <button onClick={() => navigate(`/master-data/tenants/create?station=${stationId}`)} className="text-xs font-semibold text-primary hover:underline">+ Tambah</button>
               </div>
             </div>
             {tenants.length > 0 ? (
