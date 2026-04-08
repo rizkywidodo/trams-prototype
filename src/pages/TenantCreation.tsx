@@ -1,5 +1,5 @@
 import { useState } from "react";
-import { useNavigate } from "react-router-dom";
+import { useNavigate, useSearchParams } from "react-router-dom";
 import { ArrowLeft, MapPin, Maximize2, Grid3X3, CalendarDays, Phone, Mail, Upload, X, Image, FileText, Map } from "lucide-react";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
@@ -107,11 +107,13 @@ const DropZone = ({
 
 const TenantCreation = () => {
   const navigate = useNavigate();
+  const [searchParams] = useSearchParams();
+  const preselectedStation = searchParams.get("station") || "";
 
   const [name, setName] = useState("");
   const [description, setDescription] = useState("");
   const [status, setStatus] = useState("active");
-  const [station, setStation] = useState("");
+  const [station, setStation] = useState(preselectedStation);
   const [location, setLocation] = useState("");
   const [area, setArea] = useState("");
   const [kategori, setKategori] = useState("");
