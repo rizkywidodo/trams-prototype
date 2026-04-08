@@ -226,7 +226,7 @@ const DailyReport = () => {
       });
       return;
     }
-    addLogbookRecord(selectedStation, todayStr);
+    addLogbookRecord(selectedStation, reportDate);
     clearLogbookDraft();
     toast.success("Logbook berhasil disimpan!", {
       description: `Stasiun ${STATIONS.find((s) => s.id === selectedStation)?.name}`,
