@@ -1,7 +1,7 @@
 import { useState, useMemo } from "react";
 import { useParams, useNavigate } from "react-router-dom";
 import { STATIONS, TENANTS, CHECKLIST_ITEMS } from "@/data/stations";
-import { ArrowLeft, ClipboardCheck, Check, X, MessageSquare, Save } from "lucide-react";
+import { ArrowLeft, ClipboardCheck, Check, X, MessageSquare, Save, CheckCheck } from "lucide-react";
 import { toast } from "sonner";
 
 type CheckState = Record<string, Record<string, boolean | null>>;
@@ -56,6 +56,19 @@ const TenantChecklist = () => {
     }));
   };
 
+  const checkAllYes = (tenantId: string) => {
+  const allCurrentlyYes = CHECKLIST_ITEMS.every(
+    (item) => checks[tenantId]?.[item.key] === true
+  );
+  setChecks((prev) => {
+    const newState: Record<string, boolean | null> = {};
+    CHECKLIST_ITEMS.forEach((item) => {
+      newState[item.key] = allCurrentlyYes ? null : true;
+    });
+    return { ...prev, [tenantId]: newState };
+  });
+};
+
   const getProgress = () => {
     let total = 0;
     let filled = 0;
@@ -77,7 +90,7 @@ const TenantChecklist = () => {
   const progress = getProgress();
 
   return (
-    <div className="p-6">
+    <div className="p-6 w-full">
       {/* Sub header */}
       <div className="flex items-center gap-3 mb-6">
         <button
@@ -104,14 +117,14 @@ const TenantChecklist = () => {
       </div>
 
       {/* Progress bar */}
-      <div className="h-1.5 rounded-full bg-muted overflow-hidden mb-6 max-w-3xl">
+      <div className="h-1.5 rounded-full bg-muted overflow-hidden mb-6">
         <div
           className="h-full bg-accent rounded-full transition-all duration-500"
           style={{ width: `${progress}%` }}
         />
       </div>
 
-      <div className="space-y-4 max-w-3xl">
+      <div className="space-y-4">
         {tenants.map((tenant, idx) => (
           <div
             key={tenant.id}
@@ -120,13 +133,22 @@ const TenantChecklist = () => {
           >
             {/* Tenant header */}
             <div className="flex items-center justify-between px-4 py-3 border-b border-border bg-muted/50">
-              <h2 className="font-semibold text-sm text-card-foreground">
-                {tenant.name}
-              </h2>
-              <span className="text-xs text-muted-foreground">
-                {Object.values(checks[tenant.id] || {}).filter((v) => v !== null).length}/
-                {CHECKLIST_ITEMS.length}
-              </span>
+              <div className="flex items-center gap-3">
+                <h2 className="font-semibold text-sm text-card-foreground">
+                  {tenant.name}
+                </h2>
+                <span className="text-xs text-muted-foreground">
+                  {Object.values(checks[tenant.id] || {}).filter((v) => v !== null).length}/
+                  {CHECKLIST_ITEMS.length}
+                </span>
+              </div>
+              <button
+                onClick={() => checkAllYes(tenant.id)}
+                className="flex items-center gap-1.5 px-2.5 py-1 rounded-md text-xs font-medium bg-success/10 text-success hover:bg-success hover:text-success-foreground transition-all"
+              >
+                <CheckCheck className="h-3.5 w-3.5" />
+                Centang Semua
+              </button>
             </div>
 
             {/* Checklist */}
@@ -210,7 +232,6 @@ const TenantChecklist = () => {
           </div>
         )}
 
-        {/* Save button */}
         {tenants.length > 0 && (
           <div className="pt-4 pb-8">
             <button
