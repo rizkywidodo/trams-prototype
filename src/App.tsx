@@ -20,6 +20,7 @@ import StationDetail from "./pages/StationDetail";
 import TenantDetail from "./pages/TenantDetail";
 import PersonnelList from "./pages/PersonnelList";
 import PersonnelDetail from "./pages/PersonnelDetail";
+import StationHistory from "./pages/StationHistory";
 
 const queryClient = new QueryClient();
 
@@ -41,7 +42,8 @@ const App = () => (
             <Route path="/daily-check/patrol" element={<Navigate to="/daily-check/report" replace />} />
             <Route path="/daily-check/logbook" element={<Navigate to="/daily-check/report" replace />} />
             <Route path="/daily-check/history" element={<Navigate to="/daily-check/report" replace />} />
-            <Route path="/station/:stationId" element={<TenantChecklist />} />
+            <Route path="/station/:stationId" element={<StationHistory />} />
+            <Route path="/station/:stationId/checklist" element={<TenantChecklist />} />
             <Route path="/scheduling" element={<Scheduling />} />
             <Route path="/master-data" element={<Navigate to="/master-data/stations" replace />} />
             <Route path="/master-data/stations" element={<StationList />} />

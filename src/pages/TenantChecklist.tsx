@@ -3,6 +3,8 @@ import { useParams, useNavigate } from "react-router-dom";
 import { STATIONS, TENANTS, CHECKLIST_ITEMS } from "@/data/stations";
 import { ArrowLeft, ClipboardCheck, Check, X, MessageSquare, Save, CheckCheck } from "lucide-react";
 import { toast } from "sonner";
+import { useChecklistHistory } from "@/hooks/use-checklist-history";
+import { useSearchParams } from "react-router-dom";
 
 type CheckState = Record<string, Record<string, boolean | null>>;
 type NotesState = Record<string, string>;
@@ -11,13 +13,22 @@ const TenantChecklist = () => {
   const { stationId } = useParams<{ stationId: string }>();
   const navigate = useNavigate();
 
+  const [searchParams] = useSearchParams();
+  const { saveEntry, getEntry } = useChecklistHistory();
+  const today = new Date().toISOString().split("T")[0];
+  const dateParam = searchParams.get("date") || today;
+
+
   const station = STATIONS.find((s) => s.id === stationId);
   const tenants = useMemo(
     () => TENANTS.filter((t) => t.stationId === stationId),
     [stationId]
   );
 
+  const existingEntry = getEntry(stationId || "", dateParam);
+
   const [checks, setChecks] = useState<CheckState>(() => {
+    if (existingEntry) return existingEntry.checks;
     const init: CheckState = {};
     tenants.forEach((t) => {
       init[t.id] = {};
@@ -29,6 +40,7 @@ const TenantChecklist = () => {
   });
 
   const [notes, setNotes] = useState<NotesState>(() => {
+    if (existingEntry) return existingEntry.notes;
     const init: NotesState = {};
     tenants.forEach((t) => {
       init[t.id] = "";
@@ -37,6 +49,7 @@ const TenantChecklist = () => {
   });
 
   const [openNotes, setOpenNotes] = useState<Record<string, boolean>>({});
+  const [isLocked, setIsLocked] = useState(!!existingEntry);
 
   if (!station) {
     return (
@@ -81,13 +94,22 @@ const TenantChecklist = () => {
     return total === 0 ? 0 : Math.round((filled / total) * 100);
   };
 
-  const handleSave = () => {
-    toast.success("Checklist berhasil disimpan!", {
-      description: `${station.name} — ${new Date().toLocaleDateString("id-ID")}`,
-    });
-  };
-
   const progress = getProgress();
+
+  // ganti handleSave:
+  const handleSave = () => {
+    saveEntry({
+      date: dateParam,
+      stationId: stationId || "",
+      checks,
+      notes,
+      progress,
+    });
+    toast.success("Checklist berhasil disimpan!", {
+      description: `${station.name} — ${new Date(dateParam).toLocaleDateString("id-ID")}`,
+    });
+    navigate(`/station/${stationId}`);
+  };
 
   return (
     <div className="p-6 w-full">
@@ -110,10 +132,20 @@ const TenantChecklist = () => {
             })}
           </p>
         </div>
-        <div className="flex items-center gap-2 bg-muted rounded-lg px-3 py-1.5">
-          <ClipboardCheck className="h-4 w-4 text-primary" />
-          <span className="text-sm font-semibold text-card-foreground">{progress}%</span>
-        </div>
+        <div className="flex items-center gap-2">
+      {isLocked && (
+        <button
+          onClick={() => setIsLocked(false)}
+          className="flex items-center gap-1.5 px-3 py-1.5 rounded-lg bg-muted text-muted-foreground hover:bg-primary hover:text-primary-foreground text-xs font-medium transition-all"
+        >
+          Edit
+        </button>
+      )}
+      <div className="flex items-center gap-2 bg-muted rounded-lg px-3 py-1.5">
+        <ClipboardCheck className="h-4 w-4 text-primary" />
+        <span className="text-sm font-semibold text-card-foreground">{progress}%</span>
+      </div>
+    </div>
       </div>
 
       {/* Progress bar */}
@@ -144,7 +176,8 @@ const TenantChecklist = () => {
               </div>
               <button
                 onClick={() => checkAllYes(tenant.id)}
-                className="flex items-center gap-1.5 px-2.5 py-1 rounded-md text-xs font-medium bg-success/10 text-success hover:bg-success hover:text-success-foreground transition-all"
+                disabled={isLocked}
+                className={`flex items-center gap-1.5 px-2.5 py-1 rounded-md text-xs font-medium bg-success/10 text-success hover:bg-success hover:text-success-foreground transition-all ${isLocked ? "opacity-60 cursor-not-allowed" : ""}`}
               >
                 <CheckCheck className="h-3.5 w-3.5" />
                 Centang Semua
@@ -166,22 +199,24 @@ const TenantChecklist = () => {
                     <div className="flex gap-1.5 shrink-0">
                       <button
                         onClick={() => toggleCheck(tenant.id, item.key, true)}
-                        className={`flex items-center gap-1 px-3 py-1.5 rounded-md text-xs font-medium transition-all ${
-                          val === true
-                            ? "bg-success text-success-foreground shadow-sm"
-                            : "bg-muted text-muted-foreground hover:bg-success/10 hover:text-success"
-                        }`}
-                      >
+                        disabled={isLocked}
+                      className={`flex items-center gap-1 px-3 py-1.5 rounded-md text-xs font-medium transition-all ${
+                        val === true
+                          ? "bg-success text-success-foreground shadow-sm"
+                          : "bg-muted text-muted-foreground hover:bg-success/10 hover:text-success"
+                      } ${isLocked ? "opacity-60 cursor-not-allowed" : ""}`}
+                                            >
                         <Check className="h-3.5 w-3.5" />
                         Yes
                       </button>
                       <button
                         onClick={() => toggleCheck(tenant.id, item.key, false)}
+                        disabled={isLocked}
                         className={`flex items-center gap-1 px-3 py-1.5 rounded-md text-xs font-medium transition-all ${
                           val === false
                             ? "bg-destructive text-destructive-foreground shadow-sm"
                             : "bg-muted text-muted-foreground hover:bg-destructive/10 hover:text-destructive"
-                        }`}
+                        } ${isLocked ? "opacity-60 cursor-not-allowed" : ""}`}
                       >
                         <X className="h-3.5 w-3.5" />
                         No
@@ -232,7 +267,7 @@ const TenantChecklist = () => {
           </div>
         )}
 
-        {tenants.length > 0 && (
+        {tenants.length > 0 && !isLocked && (
           <div className="pt-4 pb-8">
             <button
               onClick={handleSave}
