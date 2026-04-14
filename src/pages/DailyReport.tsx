@@ -2,8 +2,8 @@ import { useState, useMemo, useEffect } from "react";
 import { useParams, useSearchParams, useNavigate } from "react-router-dom";
 import { useAutoSave } from "@/hooks/use-auto-save";
 import { usePatrolRecords, ALL_ITEMS, SHIFTS } from "@/hooks/use-patrol-records";
-import { STATIONS } from "@/data/stations";
 import { PATROL_CATEGORIES } from "@/data/patrol";
+import { STATIONS } from "@/data/stations";
 import ShiftChecklist from "@/components/patrol/ShiftChecklist";
 import SignatureCard from "@/components/patrol/SignatureCard";
 import { Tabs, TabsList, TabsTrigger, TabsContent } from "@/components/ui/tabs";
@@ -12,13 +12,18 @@ import {
   Select, SelectContent, SelectItem, SelectTrigger, SelectValue,
 } from "@/components/ui/select";
 import {
-  MapPin, Clock, Send, Pen, Calendar, AlertTriangle, ChevronDown, User,
-  History, Plus, Trash2, Upload, CheckCircle2, FileText, BookOpen, ArrowLeft,
+  Dialog, DialogContent, DialogHeader, DialogTitle,
+} from "@/components/ui/dialog";
+import {
+  MapPin, Clock, Send, Pen, AlertTriangle, ChevronDown, User,
+  History, Plus, Trash2, Upload, CheckCircle2, FileText, BookOpen,
+  ArrowLeft, Check, X,
 } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { format, parseISO } from "date-fns";
 import { id as idLocale } from "date-fns/locale";
 import { toast } from "sonner";
+import type { PatrolRecord } from "@/hooks/use-patrol-records";
 
 // ── Logbook types ──
 interface LogEntry {
@@ -26,14 +31,12 @@ interface LogEntry {
   time: string;
   description: string;
 }
-
 interface ShiftData {
   gangguanFasilitas: LogEntry[];
   eventKunjungan: LogEntry[];
   pekerjaanArea: LogEntry[];
   keluhan: LogEntry[];
 }
-
 const createEmptyShift = (): ShiftData => ({
   gangguanFasilitas: [
     { id: crypto.randomUUID(), time: "", description: "" },
@@ -53,15 +56,119 @@ const createEmptyShift = (): ShiftData => ({
     { id: crypto.randomUUID(), time: "", description: "" },
   ],
 });
-
 const LOGBOOK_SECTIONS: { key: keyof ShiftData; label: string }[] = [
   { key: "gangguanFasilitas", label: "Gangguan Fasilitas/Kejadian/Pelanggaran/Insiden" },
   { key: "eventKunjungan", label: "Event/Kunjungan/Koordinasi Stakeholder" },
   { key: "pekerjaanArea", label: "Pekerjaan di Area Stasiun" },
   { key: "keluhan", label: "Keluhan/Apresiasi" },
 ];
-
 const LOGBOOK_SHIFT_TABS = ["Shift 1", "Shift 2", "Shift 3", "Cash Handling"];
+
+// ── Record Detail Modal ──
+const RecordDetailModal = ({
+  record,
+  open,
+  onClose,
+}: {
+  record: PatrolRecord | null;
+  open: boolean;
+  onClose: () => void;
+}) => {
+  if (!record) return null;
+
+  const shiftLabel = SHIFTS.find((s) => s.id === record.shift)?.label ?? record.shift;
+  const checkedItems = Object.entries(record.checks)
+    .filter(([, val]) => val)
+    .map(([id]) => id);
+  const uncheckedItems = ALL_ITEMS.filter((item) => !record.checks[item.id]);
+
+  return (
+    <Dialog open={open} onOpenChange={onClose}>
+      <DialogContent className="max-w-lg max-h-[80vh] overflow-y-auto">
+        <DialogHeader>
+          <DialogTitle className="text-base font-bold">Detail Record Patrol</DialogTitle>
+        </DialogHeader>
+
+        {/* Meta */}
+        <div className="rounded-lg bg-muted/50 p-3 space-y-1.5 text-sm">
+          <div className="flex justify-between">
+            <span className="text-muted-foreground">Shift</span>
+            <span className="font-semibold">{shiftLabel}</span>
+          </div>
+          <div className="flex justify-between">
+            <span className="text-muted-foreground">Diisi oleh</span>
+            <span className="font-semibold">{record.filledBy}</span>
+          </div>
+          <div className="flex justify-between">
+            <span className="text-muted-foreground">Waktu submit</span>
+            <span className="font-semibold">
+              {format(new Date(record.filledAt), "HH:mm, dd MMM yyyy", { locale: idLocale })}
+            </span>
+          </div>
+          <div className="flex justify-between">
+            <span className="text-muted-foreground">Progress</span>
+            <span className={cn(
+              "font-bold",
+              record.totalChecked === record.totalItems ? "text-green-600" : "text-yellow-600"
+            )}>
+              {record.totalChecked}/{record.totalItems} item ({Math.round((record.totalChecked / record.totalItems) * 100)}%)
+            </span>
+          </div>
+        </div>
+
+        {/* Progress bar */}
+        <div className="h-2 bg-muted rounded-full overflow-hidden">
+          <div
+            className={cn(
+              "h-full rounded-full transition-all",
+              record.totalChecked === record.totalItems ? "bg-green-500" : "bg-yellow-500"
+            )}
+            style={{ width: `${Math.round((record.totalChecked / record.totalItems) * 100)}%` }}
+          />
+        </div>
+
+        {/* Unchecked items */}
+        {uncheckedItems.length > 0 && (
+          <div>
+            <p className="text-xs font-bold text-destructive mb-2 flex items-center gap-1.5">
+              <X className="h-3.5 w-3.5" />
+              Belum dicentang ({uncheckedItems.length})
+            </p>
+            <div className="space-y-1">
+              {uncheckedItems.map((item) => (
+                <div key={item.id} className="flex items-start gap-2 rounded-md bg-destructive/5 border border-destructive/20 px-3 py-2">
+                  <X className="h-3 w-3 text-destructive shrink-0 mt-0.5" />
+                  <span className="text-xs text-foreground">{item.indicator}</span>
+                </div>
+              ))}
+            </div>
+          </div>
+        )}
+
+        {/* Notes */}
+        {record.notes && (
+          <div>
+            <p className="text-xs font-bold text-foreground mb-1.5 flex items-center gap-1.5">
+              <AlertTriangle className="h-3.5 w-3.5 text-yellow-500" />
+              Catatan Temuan
+            </p>
+            <p className="text-xs text-muted-foreground bg-muted/50 rounded-md p-3 leading-relaxed">
+              {record.notes}
+            </p>
+          </div>
+        )}
+
+        {/* All checked */}
+        {uncheckedItems.length === 0 && (
+          <div className="flex items-center gap-2 text-green-600 bg-green-500/10 rounded-lg px-3 py-2">
+            <CheckCircle2 className="h-4 w-4 shrink-0" />
+            <span className="text-sm font-semibold">Semua item sudah tercentang</span>
+          </div>
+        )}
+      </DialogContent>
+    </Dialog>
+  );
+};
 
 // ── Main Page ──
 const DailyReport = () => {
@@ -70,8 +177,8 @@ const DailyReport = () => {
   const navigate = useNavigate();
 
   const {
-    records, addRecord, getRecordsForDate, getCompletionStatus,
-    addLogbookRecord, getLogbookForDate, todayStr,
+    records, addRecord, getRecordsForDate, getRecordsForShift,
+    getCompletionStatus, addLogbookRecord, getLogbookForDate, todayStr,
   } = usePatrolRecords();
 
   const reportDate = dateParam || todayStr;
@@ -82,6 +189,10 @@ const DailyReport = () => {
   const [mainTab, setMainTab] = useState<"patrol" | "logbook">("patrol");
   const [currentTime, setCurrentTime] = useState(new Date());
 
+  // Modal state
+  const [selectedRecord, setSelectedRecord] = useState<PatrolRecord | null>(null);
+  const [modalOpen, setModalOpen] = useState(false);
+
   useEffect(() => {
     const timer = setInterval(() => setCurrentTime(new Date()), 1000);
     return () => clearInterval(timer);
@@ -89,15 +200,19 @@ const DailyReport = () => {
 
   // ── Patrol state ──
   const [activeShift, setActiveShift] = useState(SHIFTS[0].id);
+  // checks is now PER SHIFT: shiftId -> itemId -> boolean
   const [checks, setChecks] = useState<Record<string, Record<string, boolean>>>({});
   const [notes, setNotes] = useState("");
   const [filledBy, setFilledBy] = useState("");
   const [showHistory, setShowHistory] = useState(false);
 
-  const patrolDraft = useMemo(() => ({ checks, notes, selectedStation, filledBy }), [checks, notes, selectedStation, filledBy]);
+  const patrolDraft = useMemo(
+    () => ({ checks, notes, selectedStation, filledBy }),
+    [checks, notes, selectedStation, filledBy]
+  );
   const { clearDraft: clearPatrolDraft } = useAutoSave("form-patrol", patrolDraft, (saved) => {
-    setChecks(saved.checks);
-    setNotes(saved.notes);
+    setChecks(saved.checks || {});
+    setNotes(saved.notes || "");
     if (saved.selectedStation) setSelectedStation(saved.selectedStation);
     if (saved.filledBy) setFilledBy(saved.filledBy);
   });
@@ -109,7 +224,6 @@ const DailyReport = () => {
     LOGBOOK_SHIFT_TABS.forEach((s) => { init[s] = createEmptyShift(); });
     return init;
   });
-
   const logbookDraft = useMemo(() => ({ logbookData, selectedStation }), [logbookData, selectedStation]);
   const { clearDraft: clearLogbookDraft } = useAutoSave("logbook", logbookDraft, (saved) => {
     if (saved.logbookData) setLogbookData(saved.logbookData);
@@ -126,20 +240,42 @@ const DailyReport = () => {
     [getCompletionStatus, selectedStation, reportDate]
   );
 
-  const totalCells = ALL_ITEMS.length * SHIFTS.length;
-  const filledCells = useMemo(() => {
-    let count = 0;
-    Object.values(checks).forEach((sc) => {
-      Object.values(sc).forEach((v) => { if (v) count++; });
-    });
-    return count;
-  }, [checks]);
-  const progress = totalCells > 0 ? Math.round((filledCells / totalCells) * 100) : 0;
+  // Current shift's checks from state
+  const activeShiftChecks = checks[activeShift] || {};
 
+  // Progress for the ACTIVE shift only
+  const activeShiftCheckedCount = Object.values(activeShiftChecks).filter(Boolean).length;
+  const activeShiftProgress = ALL_ITEMS.length > 0
+    ? Math.round((activeShiftCheckedCount / ALL_ITEMS.length) * 100)
+    : 0;
+
+  // Per-shift completion status for tab indicators
   const shiftCompletionStatus = SHIFTS.map((s) => {
-    const sc = checks[s.id] || {};
-    const done = Object.values(sc).filter(Boolean).length;
-    return { ...s, done, total: ALL_ITEMS.length, complete: done === ALL_ITEMS.length && ALL_ITEMS.length > 0 };
+    // Check latest submitted record for this shift
+    const shiftRecords = getRecordsForShift(selectedStation, reportDate, s.id);
+    const latestRecord = shiftRecords.length
+      ? shiftRecords.reduce((latest, r) =>
+          new Date(r.filledAt) > new Date(latest.filledAt) ? r : latest
+        )
+      : null;
+
+    // Also check current unsaved state
+    const currentChecks = checks[s.id] || {};
+    const currentDone = Object.values(currentChecks).filter(Boolean).length;
+
+    const submittedDone = latestRecord?.totalChecked ?? 0;
+    const done = Math.max(currentDone, submittedDone);
+    const total = ALL_ITEMS.length;
+    const hasSubmitted = !!latestRecord;
+
+    return {
+      ...s,
+      done,
+      total,
+      complete: hasSubmitted && submittedDone === total,
+      hasSubmitted,
+      latestRecord,
+    };
   });
 
   // ── Patrol handlers ──
@@ -166,26 +302,45 @@ const DailyReport = () => {
       toast.error("Nama pengisi harus diisi!");
       return;
     }
+
+    // Only save the ACTIVE shift's checks
+    const shiftChecks = checks[activeShift] || {};
+    const checkedCount = Object.values(shiftChecks).filter(Boolean).length;
+
+    if (checkedCount === 0) {
+      toast.error("Belum ada item yang dicentang!");
+      return;
+    }
+
+    const shiftLabel = SHIFTS.find((s) => s.id === activeShift)?.label ?? activeShift;
+
     addRecord({
       stationId: selectedStation,
       date: reportDate,
       shift: activeShift,
       filledBy: filledBy.trim(),
       filledAt: new Date().toISOString(),
-      checks, notes,
-      totalChecked: filledCells,
-      totalItems: totalCells,
+      checks: shiftChecks,           // only this shift's checks
+      notes,
+      totalChecked: checkedCount,
+      totalItems: ALL_ITEMS.length,  // items per shift
     });
-    clearPatrolDraft();
-    setChecks({});
+
+    // Clear only this shift's checks from state
+    setChecks((prev) => ({ ...prev, [activeShift]: {} }));
     setNotes("");
-    toast.success("Patrol record tersimpan!", {
-      description: `Oleh ${filledBy.trim()} — ${filledCells}/${totalCells} item`,
+    clearPatrolDraft();
+
+    toast.success(`${shiftLabel} tersimpan!`, {
+      description: `Oleh ${filledBy.trim()} — ${checkedCount}/${ALL_ITEMS.length} item`,
     });
   };
 
   // ── Logbook handlers ──
-  const updateLogEntry = (shift: string, section: keyof ShiftData, entryId: string, field: "time" | "description", value: string) => {
+  const updateLogEntry = (
+    shift: string, section: keyof ShiftData,
+    entryId: string, field: "time" | "description", value: string
+  ) => {
     setLogbookData((prev) => ({
       ...prev,
       [shift]: {
@@ -231,6 +386,11 @@ const DailyReport = () => {
     toast.success("Logbook berhasil disimpan!", {
       description: `Stasiun ${STATIONS.find((s) => s.id === selectedStation)?.name}`,
     });
+  };
+
+  const openRecordDetail = (record: PatrolRecord) => {
+    setSelectedRecord(record);
+    setModalOpen(true);
   };
 
   return (
@@ -293,14 +453,19 @@ const DailyReport = () => {
           )}
           <div className="flex-1">
             <p className={cn("text-sm font-semibold", patrolStatus.complete ? "text-green-700" : "text-yellow-700")}>
-              {patrolStatus.complete ? "Form Patrol lengkap — Logbook siap di-submit" : "Form Patrol belum lengkap"}
+              {patrolStatus.complete
+                ? "Form Patrol lengkap — Logbook siap di-submit"
+                : "Form Patrol belum lengkap"}
             </p>
             <p className="text-xs text-muted-foreground mt-0.5">
               {patrolStatus.checked}/{patrolStatus.total} item tercentang ({patrolStatus.percentage}%)
             </p>
             <div className="h-1.5 bg-muted rounded-full overflow-hidden mt-2 max-w-xs">
               <div
-                className={cn("h-full rounded-full transition-all", patrolStatus.complete ? "bg-green-500" : "bg-yellow-500")}
+                className={cn(
+                  "h-full rounded-full transition-all",
+                  patrolStatus.complete ? "bg-green-500" : "bg-yellow-500"
+                )}
                 style={{ width: `${patrolStatus.percentage}%` }}
               />
             </div>
@@ -308,7 +473,7 @@ const DailyReport = () => {
         </div>
       </div>
 
-      {/* Main Tabs: Patrol | Logbook */}
+      {/* Main Tabs */}
       <div className="px-6 md:px-8 pb-6">
         <Tabs value={mainTab} onValueChange={(v) => setMainTab(v as "patrol" | "logbook")}>
           <TabsList className="mb-6 h-11">
@@ -329,7 +494,9 @@ const DailyReport = () => {
               <div className="flex items-center gap-3 rounded-xl border border-border bg-card p-4 shadow-sm">
                 <User className="h-5 w-5 text-accent shrink-0" />
                 <div className="flex-1">
-                  <label className="text-[11px] font-semibold text-muted-foreground uppercase tracking-wide">Nama Pengisi</label>
+                  <label className="text-[11px] font-semibold text-muted-foreground uppercase tracking-wide">
+                    Nama Pengisi
+                  </label>
                   <input
                     value={filledBy}
                     onChange={(e) => setFilledBy(e.target.value)}
@@ -340,7 +507,7 @@ const DailyReport = () => {
               </div>
             </div>
 
-            {/* Today's patrol records */}
+            {/* History */}
             {todayRecords.length > 0 && (
               <div className="pb-4">
                 <button
@@ -353,43 +520,68 @@ const DailyReport = () => {
                 </button>
                 {showHistory && (
                   <div className="space-y-2">
-                    {todayRecords.map((rec) => (
-                      <div key={rec.id} className="rounded-lg border border-border bg-muted/30 p-3 flex items-center justify-between">
-                        <div>
-                          <p className="text-sm font-medium text-foreground">{rec.filledBy}</p>
-                          <p className="text-[11px] text-muted-foreground">
-                            {format(new Date(rec.filledAt), "HH:mm", { locale: idLocale })} — {rec.totalChecked}/{rec.totalItems} item dicentang
-                          </p>
-                        </div>
-                        <span className={cn(
-                          "text-[10px] font-bold px-2 py-1 rounded-full",
-                          rec.totalChecked === rec.totalItems
-                            ? "bg-green-500/15 text-green-600"
-                            : "bg-yellow-500/15 text-yellow-600"
-                        )}>
-                          {Math.round((rec.totalChecked / rec.totalItems) * 100)}%
-                        </span>
-                      </div>
-                    ))}
+                    {todayRecords
+                      .slice()
+                      .sort((a, b) => new Date(b.filledAt).getTime() - new Date(a.filledAt).getTime())
+                      .map((rec) => {
+                        const shiftLabel = SHIFTS.find((s) => s.id === rec.shift)?.label ?? rec.shift;
+                        const pct = Math.round((rec.totalChecked / rec.totalItems) * 100);
+                        const complete = rec.totalChecked === rec.totalItems;
+                        return (
+                          <button
+                            key={rec.id}
+                            onClick={() => openRecordDetail(rec)}
+                            className="w-full rounded-lg border border-border bg-muted/30 p-3 flex items-center justify-between hover:bg-muted/60 transition-colors text-left group"
+                          >
+                            <div>
+                              <p className="text-sm font-semibold text-foreground">{shiftLabel}</p>
+                              <p className="text-[11px] text-muted-foreground">
+                                {rec.filledBy} · {format(new Date(rec.filledAt), "HH:mm", { locale: idLocale })}
+                                {" — "}
+                                {rec.totalChecked}/{rec.totalItems} item
+                              </p>
+                            </div>
+                            <div className="flex items-center gap-2">
+                              <span className={cn(
+                                "text-[10px] font-bold px-2 py-1 rounded-full",
+                                complete
+                                  ? "bg-green-500/15 text-green-600"
+                                  : "bg-yellow-500/15 text-yellow-600"
+                              )}>
+                                {pct}%
+                              </span>
+                              <span className="text-[10px] text-muted-foreground group-hover:text-foreground transition-colors">
+                                Lihat →
+                              </span>
+                            </div>
+                          </button>
+                        );
+                      })}
                   </div>
                 )}
               </div>
             )}
 
-            {/* Progress */}
+            {/* Active shift progress */}
             <div className="pb-4">
               <div className="flex items-center justify-between mb-2">
                 <div className="flex items-center gap-2">
                   <Clock className="h-3.5 w-3.5 text-muted-foreground" />
-                  <span className="text-xs text-muted-foreground font-medium">Progress Patrol Ini</span>
+                  <span className="text-xs text-muted-foreground font-medium">
+                    Progress — {SHIFTS.find((s) => s.id === activeShift)?.label}
+                  </span>
                 </div>
                 <span className="text-xs font-semibold text-foreground">
-                  {filledCells}<span className="text-muted-foreground font-normal"> / {totalCells}</span>
-                  <span className="text-muted-foreground font-normal ml-1">({progress}%)</span>
+                  {activeShiftCheckedCount}
+                  <span className="text-muted-foreground font-normal"> / {ALL_ITEMS.length}</span>
+                  <span className="text-muted-foreground font-normal ml-1">({activeShiftProgress}%)</span>
                 </span>
               </div>
               <div className="h-1.5 bg-muted rounded-full overflow-hidden">
-                <div className="h-full bg-accent rounded-full transition-all duration-500 ease-out" style={{ width: `${progress}%` }} />
+                <div
+                  className="h-full bg-accent rounded-full transition-all duration-500 ease-out"
+                  style={{ width: `${activeShiftProgress}%` }}
+                />
               </div>
             </div>
 
@@ -402,18 +594,24 @@ const DailyReport = () => {
                     value={s.id}
                     className={cn(
                       "relative text-[11px] font-semibold px-3 py-2 rounded-lg data-[state=active]:shadow-md transition-all",
-                      s.complete && "data-[state=inactive]:text-accent"
+                      s.complete && "data-[state=inactive]:text-green-600"
                     )}
                   >
                     {s.shortLabel}
-                    {s.done > 0 && (
+                    {s.hasSubmitted ? (
                       <span className={cn(
                         "ml-1.5 text-[9px] font-bold px-1.5 py-0.5 rounded-full",
-                        s.complete ? "bg-accent text-accent-foreground" : "bg-muted-foreground/15 text-muted-foreground"
+                        s.complete
+                          ? "bg-green-500/20 text-green-600"
+                          : "bg-yellow-500/15 text-yellow-600"
                       )}>
+                        {s.done}/{s.total}
+                      </span>
+                    ) : s.done > 0 ? (
+                      <span className="ml-1.5 text-[9px] font-bold px-1.5 py-0.5 rounded-full bg-muted-foreground/15 text-muted-foreground">
                         {s.done}
                       </span>
-                    )}
+                    ) : null}
                   </TabsTrigger>
                 ))}
               </TabsList>
@@ -421,6 +619,34 @@ const DailyReport = () => {
               {SHIFTS.map((shift) => (
                 <TabsContent key={shift.id} value={shift.id} className="mt-4">
                   <div className="rounded-xl border border-border bg-card shadow-sm p-4">
+                    {/* Show latest submitted badge for this shift */}
+                    {(() => {
+                      const info = shiftCompletionStatus.find((s) => s.id === shift.id);
+                      return info?.hasSubmitted ? (
+                        <div className={cn(
+                          "mb-3 flex items-center gap-2 text-xs rounded-lg px-3 py-2",
+                          info.complete
+                            ? "bg-green-500/10 text-green-700"
+                            : "bg-yellow-500/10 text-yellow-700"
+                        )}>
+                          {info.complete
+                            ? <CheckCircle2 className="h-3.5 w-3.5 shrink-0" />
+                            : <AlertTriangle className="h-3.5 w-3.5 shrink-0" />}
+                          <span className="font-semibold">
+                            {info.complete
+                              ? `Shift ini sudah lengkap (${info.latestRecord?.filledBy})`
+                              : `Record terakhir: ${info.done}/${info.total} item oleh ${info.latestRecord?.filledBy}`}
+                          </span>
+                          <button
+                            onClick={() => info.latestRecord && openRecordDetail(info.latestRecord)}
+                            className="ml-auto text-[10px] underline underline-offset-2 opacity-70 hover:opacity-100"
+                          >
+                            Lihat detail
+                          </button>
+                        </div>
+                      ) : null;
+                    })()}
+
                     <div className="flex items-center justify-between mb-4">
                       <h2 className="text-sm font-bold text-foreground">{shift.label}</h2>
                     </div>
@@ -470,23 +696,25 @@ const DailyReport = () => {
               </div>
             </div>
 
-            {/* Submit Patrol */}
+            {/* Submit — per active shift */}
             <div className="mt-6 pb-8">
               <button
                 onClick={handlePatrolSubmit}
-                disabled={filledCells === 0 || !filledBy.trim()}
+                disabled={activeShiftCheckedCount === 0 || !filledBy.trim()}
                 className={cn(
                   "w-full flex items-center justify-center gap-2.5 rounded-xl py-4 font-bold text-sm transition-all duration-300",
-                  filledCells > 0 && filledBy.trim()
+                  activeShiftCheckedCount > 0 && filledBy.trim()
                     ? "bg-accent text-accent-foreground shadow-lg shadow-accent/20 hover:shadow-xl hover:shadow-accent/30 hover:-translate-y-0.5"
                     : "bg-muted text-muted-foreground cursor-not-allowed"
                 )}
               >
                 <Send className="h-4 w-4" />
-                Simpan Patrol Record
+                Simpan {SHIFTS.find((s) => s.id === activeShift)?.label ?? "Shift Ini"}
               </button>
-              {!filledBy.trim() && filledCells > 0 && (
-                <p className="text-center text-xs text-destructive mt-2">Nama pengisi harus diisi sebelum menyimpan</p>
+              {!filledBy.trim() && activeShiftCheckedCount > 0 && (
+                <p className="text-center text-xs text-destructive mt-2">
+                  Nama pengisi harus diisi sebelum menyimpan
+                </p>
               )}
             </div>
           </TabsContent>
@@ -547,7 +775,9 @@ const DailyReport = () => {
                     {/* Upload */}
                     <div>
                       <h3 className="text-sm font-bold text-card-foreground mb-1">Unggah Dokumentasi</h3>
-                      <p className="text-xs text-muted-foreground mb-3">Harap mengunggah dokumentasi sesuai kondisi yang terjadi</p>
+                      <p className="text-xs text-muted-foreground mb-3">
+                        Harap mengunggah dokumentasi sesuai kondisi yang terjadi
+                      </p>
                       <div className="rounded-lg border-2 border-dashed border-border bg-muted/30 flex flex-col items-center justify-center py-12 gap-3">
                         <Upload className="h-8 w-8 text-muted-foreground" />
                         <p className="text-sm text-muted-foreground">Choose a file or drag & drop it here</p>
@@ -587,6 +817,12 @@ const DailyReport = () => {
         </Tabs>
       </div>
 
+      {/* Record Detail Modal */}
+      <RecordDetailModal
+        record={selectedRecord}
+        open={modalOpen}
+        onClose={() => setModalOpen(false)}
+      />
     </div>
   );
 };

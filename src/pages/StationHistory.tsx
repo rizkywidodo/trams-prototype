@@ -92,7 +92,7 @@ const StationHistory = () => {
         className="w-full flex items-center justify-center gap-2 rounded-lg bg-primary text-primary-foreground py-3.5 font-semibold text-sm hover:opacity-90 transition-opacity mb-6"
       >
         <Plus className="h-4 w-4" />
-        {todayEntry ? "Lanjutkan Inspeksi Hari Ini" : "Mulai Inspeksi Hari Ini"}
+        {todayEntry ? "Lanjutkan Pengecekan Hari Ini" : "Mulai Pengecekan Hari ini"}
       </button>
 
       {/* List view */}
