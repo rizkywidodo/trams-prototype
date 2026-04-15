@@ -2,6 +2,7 @@ import { useState, useMemo, useEffect } from "react";
 import { useParams, useSearchParams, useNavigate } from "react-router-dom";
 import { useAutoSave } from "@/hooks/use-auto-save";
 import { usePatrolRecords, ALL_ITEMS, SHIFTS } from "@/hooks/use-patrol-records";
+import { getRecords } from "@/hooks/use-patrol-records";
 import { PATROL_CATEGORIES } from "@/data/patrol";
 import { STATIONS } from "@/data/stations";
 import ShiftChecklist from "@/components/patrol/ShiftChecklist";
@@ -201,21 +202,58 @@ const DailyReport = () => {
   // ── Patrol state ──
   const [activeShift, setActiveShift] = useState(SHIFTS[0].id);
   // checks is now PER SHIFT: shiftId -> itemId -> boolean
-  const [checks, setChecks] = useState<Record<string, Record<string, boolean>>>({});
+ 
+  const [checks, setChecks] = useState<Record<string, Record<string, boolean>>>(() => {
+  try {
+    const raw = localStorage.getItem("patrol-records");
+    const records: PatrolRecord[] = raw ? JSON.parse(raw) : [];
+    const init: Record<string, Record<string, boolean>> = {};
+    SHIFTS.forEach((s) => {
+      const latest = records
+        .filter((r) => r.stationId === (stationFromUrl || STATIONS[0].id) && r.shift === s.id)
+        .sort((a, b) => new Date(b.filledAt).getTime() - new Date(a.filledAt).getTime())[0];
+      if (latest) init[s.id] = latest.checks;
+    });
+    return init;
+  } catch {
+    return {};
+  }
+});
+
   const [notes, setNotes] = useState("");
   const [filledBy, setFilledBy] = useState("");
+  const [signatures, setSignatures] = useState<Record<string, string>>(() => {
+  try {
+    const raw = localStorage.getItem(`signatures:${reportDate}`);
+    return raw ? JSON.parse(raw) : {};
+  } catch { return {}; }
+});
   const [showHistory, setShowHistory] = useState(false);
 
+// Load checks dari record terbaru tiap ganti stasiun/tanggal
+useEffect(() => {
+  try {
+    const raw = localStorage.getItem("patrol-records");
+    const allRecords: PatrolRecord[] = raw ? JSON.parse(raw) : [];
+    const init: Record<string, Record<string, boolean>> = {};
+    SHIFTS.forEach((s) => {
+      const latest = allRecords
+        .filter((r) => r.stationId === selectedStation && r.shift === s.id && r.date === reportDate)
+        .sort((a, b) => new Date(b.filledAt).getTime() - new Date(a.filledAt).getTime())[0];
+      if (latest) init[s.id] = latest.checks;
+    });
+    setChecks(init);
+  } catch {}
+}, [selectedStation, reportDate]);
+
   const patrolDraft = useMemo(
-    () => ({ checks, notes, selectedStation, filledBy }),
-    [checks, notes, selectedStation, filledBy]
-  );
-  const { clearDraft: clearPatrolDraft } = useAutoSave("form-patrol", patrolDraft, (saved) => {
-    setChecks(saved.checks || {});
-    setNotes(saved.notes || "");
-    if (saved.selectedStation) setSelectedStation(saved.selectedStation);
-    if (saved.filledBy) setFilledBy(saved.filledBy);
-  });
+  () => ({ notes, selectedStation }),
+  [notes, selectedStation]
+);
+const { clearDraft: clearPatrolDraft } = useAutoSave("form-patrol", patrolDraft, (saved) => {
+  setNotes(saved.notes || "");
+  if (saved.selectedStation) setSelectedStation(saved.selectedStation);
+});
 
   // ── Logbook state ──
   const [activeLogbookShift, setActiveLogbookShift] = useState("Shift 1");
@@ -329,6 +367,7 @@ const DailyReport = () => {
     // Clear only this shift's checks from state
     setChecks((prev) => ({ ...prev, [activeShift]: {} }));
     setNotes("");
+    setFilledBy(""); // tambah ini
     clearPatrolDraft();
 
     toast.success(`${shiftLabel} tersimpan!`, {
@@ -508,22 +547,23 @@ const DailyReport = () => {
             </div>
 
             {/* History */}
-            {todayRecords.length > 0 && (
-              <div className="pb-4">
-                <button
-                  onClick={() => setShowHistory(!showHistory)}
-                  className="flex items-center gap-2 text-xs font-semibold text-accent hover:text-accent/80 transition-colors mb-2"
-                >
-                  <History className="h-3.5 w-3.5" />
-                  Patrol hari ini: {todayRecords.length} record
+            {todayRecords.filter((r) => r.shift === activeShift).length > 0 && (
+                <div className="pb-4">
+                  <button
+                    onClick={() => setShowHistory(!showHistory)}
+                    className="flex items-center gap-2 text-xs font-semibold text-accent hover:text-accent/80 transition-colors mb-2"
+                  >
+                    <History className="h-3.5 w-3.5" />
+                    Patrol hari ini: {todayRecords.filter((r) => r.shift === activeShift).length} record
                   <ChevronDown className={cn("h-3.5 w-3.5 transition-transform", showHistory && "rotate-180")} />
                 </button>
                 {showHistory && (
-                  <div className="space-y-2">
-                    {todayRecords
-                      .slice()
-                      .sort((a, b) => new Date(b.filledAt).getTime() - new Date(a.filledAt).getTime())
-                      .map((rec) => {
+                    <div className="space-y-2">
+                      {todayRecords
+                        .filter((r) => r.shift === activeShift)
+                        .slice()
+                        .sort((a, b) => new Date(b.filledAt).getTime() - new Date(a.filledAt).getTime())
+                        .map((rec) => {
                         const shiftLabel = SHIFTS.find((s) => s.id === rec.shift)?.label ?? rec.shift;
                         const pct = Math.round((rec.totalChecked / rec.totalItems) * 100);
                         const complete = rec.totalChecked === rec.totalItems;
@@ -649,6 +689,15 @@ const DailyReport = () => {
 
                     <div className="flex items-center justify-between mb-4">
                       <h2 className="text-sm font-bold text-foreground">{shift.label}</h2>
+                      {shiftCompletionStatus.find((s) => s.id === shift.id)?.hasSubmitted && (
+                        <button
+                          onClick={() => setChecks((prev) => ({ ...prev, [shift.id]: {} }))}
+                          className="flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-medium bg-muted text-muted-foreground hover:bg-primary hover:text-primary-foreground transition-all"
+                        >
+                          <Plus className="h-3.5 w-3.5" />
+                          Patrol Ulang
+                        </button>
+                      )}
                     </div>
                     <ShiftChecklist
                       shiftId={shift.id}
@@ -688,10 +737,18 @@ const DailyReport = () => {
                   Tanda Tangan
                 </h3>
                 <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
-                  <SignatureCard label="Station Head" />
-                  <SignatureCard label="Area Authority 1" />
-                  <SignatureCard label="Area Authority 2" />
-                  <SignatureCard label="Area Authority 3" />
+                  {["Station Head", "Area Authority 1", "Area Authority 2", "Area Authority 3"].map((role) => (
+                    <SignatureCard
+                      key={role}
+                      label={role}
+                      savedName={signatures[role] || ""}
+                      onSign={(name) => {
+                      const updated = { ...signatures, [role]: name };
+                      setSignatures(updated);
+                      localStorage.setItem(`signatures:${reportDate}`, JSON.stringify(updated));
+                    }}
+                    />
+                  ))}
                 </div>
               </div>
             </div>

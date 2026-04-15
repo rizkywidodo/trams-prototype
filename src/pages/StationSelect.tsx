@@ -143,7 +143,7 @@ const StationSelect = () => {
 
         {inspectedStations.length > 0 ? (
           <div className="rounded-lg border border-border bg-card p-4">
-            <h3 className="text-sm font-bold text-card-foreground mb-3">Sudah Dicek😁</h3>
+            <h3 className="text-sm font-bold text-card-foreground mb-3">Presentase Progress Hari Ini 😁</h3>
             <div className="space-y-2">
               {inspectedStations.map((s) => (
                 <div key={s.id} className="flex items-center justify-between">

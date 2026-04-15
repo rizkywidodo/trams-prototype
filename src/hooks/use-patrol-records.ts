@@ -32,7 +32,7 @@ function subscribe(listener: () => void) {
   return () => { listeners = listeners.filter((l) => l !== listener); };
 }
 
-function getRecords(): PatrolRecord[] {
+export function getRecords(): PatrolRecord[] {
   try {
     const raw = localStorage.getItem(PATROL_STORE_KEY);
     return raw ? JSON.parse(raw) : [];
