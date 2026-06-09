@@ -1,7 +1,7 @@
 import { useState, useMemo } from "react";
 import { format, addDays } from "date-fns";
 import { id as localeId } from "date-fns/locale";
-import { Search, Download, Upload, RefreshCw, CalendarIcon, Wand2 } from "lucide-react";
+import { Search, Download, Upload, RefreshCw, CalendarIcon, Wand2, ArrowLeftRight, Bell } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import {
@@ -15,8 +15,10 @@ import {
 } from "@/components/ui/popover";
 import { Calendar } from "@/components/ui/calendar";
 import { useToast } from "@/hooks/use-toast";
+import { useShiftSwap } from "@/hooks/use-shift-swap";
+import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
+import { useNavigate } from "react-router-dom";
 
-// MRTJ-style shift color coding
 const SHIFT_TYPES: Record<string, { bg: string; text: string }> = {
   W1: { bg: "bg-[hsl(215_60%_28%/0.12)]", text: "text-[hsl(215_60%_28%)]" },
   W2: { bg: "bg-[hsl(215_60%_28%/0.12)]", text: "text-[hsl(215_60%_28%)]" },
@@ -69,10 +71,18 @@ function generateSchedule(employees: typeof EMPLOYEES, startDate: Date, days: nu
 
 const Scheduling = () => {
   const { toast } = useToast();
+  const navigate = useNavigate();
+  const { addRequest, getPendingCount } = useShiftSwap();
+  const [pendingCount, setPendingCount] = useState(getPendingCount());
+  const [swapModal, setSwapModal] = useState<{ nik: string; date: string; shift: string } | null>(null);
+  const [swapTargetNik, setSwapTargetNik] = useState("");
+  const [swapTargetDate, setSwapTargetDate] = useState("");
+  const [swapReason, setSwapReason] = useState("");
   const [startDate, setStartDate] = useState<Date>(new Date(2026, 1, 25));
   const [endDate, setEndDate] = useState<Date>(new Date(2026, 2, 3));
   const [searchName, setSearchName] = useState("");
   const [editingCell, setEditingCell] = useState<{ nik: string; date: string } | null>(null);
+  const [schedule, setSchedule] = useState(() => generateSchedule(EMPLOYEES, new Date(2026, 1, 25), 14));
 
   const days = useMemo(() => {
     const diff = Math.ceil((endDate.getTime() - startDate.getTime()) / (1000 * 60 * 60 * 24)) + 1;
@@ -91,8 +101,6 @@ const Scheduling = () => {
       };
     });
   }, [startDate, days]);
-
-  const [schedule, setSchedule] = useState(() => generateSchedule(EMPLOYEES, new Date(2026, 1, 25), 14));
 
   const filteredEmployees = useMemo(() => {
     if (!searchName.trim()) return EMPLOYEES;
@@ -122,6 +130,14 @@ const Scheduling = () => {
         <div className="flex items-center gap-1.5">
           <Button variant="outline" size="sm" className="h-8 text-xs" onClick={() => toast({ title: "Coming soon" })}>
             <Wand2 className="h-3.5 w-3.5 mr-1" /> Template
+          </Button>
+          <Button variant="outline" size="sm" className="h-8 text-xs relative" onClick={() => navigate("/scheduling/approvals")}>
+            <Bell className="h-3.5 w-3.5 mr-1" /> Approvals
+            {pendingCount > 0 && (
+              <span className="absolute -top-1.5 -right-1.5 h-4 w-4 rounded-full bg-destructive text-destructive-foreground text-[9px] font-bold flex items-center justify-center">
+                {pendingCount}
+              </span>
+            )}
           </Button>
           <Button variant="outline" size="sm" className="h-8 text-xs" onClick={() => toast({ title: "Coming soon" })}>
             <Upload className="h-3.5 w-3.5 mr-1" /> Import
@@ -213,7 +229,6 @@ const Scheduling = () => {
                       const shift = schedule[emp.nik]?.[col.key] || "";
                       const isEditing = editingCell?.nik === emp.nik && editingCell?.date === col.key;
                       const style = SHIFT_TYPES[shift];
-
                       return (
                         <TableCell key={col.key} className={`text-center px-0.5 py-1 ${col.isSunday ? "bg-[hsl(0_72%_55%/0.04)]" : ""}`}>
                           {isEditing ? (
@@ -230,8 +245,15 @@ const Scheduling = () => {
                           ) : (
                             <button
                               onClick={() => setEditingCell({ nik: emp.nik, date: col.key })}
+                              onContextMenu={(e) => {
+                                e.preventDefault();
+                                setSwapModal({ nik: emp.nik, date: col.key, shift });
+                                setSwapTargetNik("");
+                                setSwapTargetDate(col.key);
+                                setSwapReason("");
+                              }}
                               className={`inline-flex items-center justify-center h-7 w-[58px] rounded text-[11px] font-semibold transition-all hover:ring-1 hover:ring-ring/40 cursor-pointer ${style ? `${style.bg} ${style.text}` : "bg-muted/50 text-muted-foreground"}`}
-                              title="Klik untuk edit shift"
+                              title="Klik untuk edit · Klik kanan untuk tukar shift"
                             >
                               {shift}
                             </button>
@@ -257,6 +279,129 @@ const Scheduling = () => {
         <span className="flex items-center gap-1"><span className="h-3 w-3 rounded bg-[hsl(260_50%_55%/0.12)]" /> Simulasi</span>
         <span className="flex items-center gap-1"><span className="h-3 w-3 rounded bg-[hsl(0_72%_55%/0.12)]" /> BHI/BLM/ASM</span>
       </div>
+
+      {/* Swap Modal */}
+      <Dialog open={!!swapModal} onOpenChange={() => setSwapModal(null)}>
+        <DialogContent className="max-w-md">
+          <DialogHeader>
+            <DialogTitle className="flex items-center gap-2">
+              <ArrowLeftRight className="h-5 w-5 text-primary" />
+              Request Tukar Jadwal
+            </DialogTitle>
+          </DialogHeader>
+          {swapModal && (() => {
+            const requestor = EMPLOYEES.find((e) => e.nik === swapModal.nik);
+            const target = EMPLOYEES.find((e) => e.nik === swapTargetNik);
+            const targetShift = target ? schedule[target.nik]?.[swapTargetDate] : "";
+            const availableEmployees = EMPLOYEES.filter((e) => e.nik !== swapModal.nik);
+
+            return (
+              <div className="space-y-4">
+                <div className="rounded-lg bg-primary/5 border border-primary/20 p-3">
+                  <p className="text-[10px] font-semibold text-primary uppercase mb-1">Jadwal Anda</p>
+                  <p className="text-sm font-bold text-foreground">{requestor?.nama}</p>
+                  <p className="text-xs text-muted-foreground mt-0.5">
+                    {format(new Date(swapModal.date), "EEEE, dd MMMM yyyy", { locale: localeId })}
+                  </p>
+                  <span className="inline-block mt-1.5 px-2.5 py-0.5 rounded bg-primary/15 text-primary text-xs font-bold">
+                    {swapModal.shift}
+                  </span>
+                </div>
+
+                <div>
+                  <label className="text-sm font-semibold text-foreground">Tukar dengan</label>
+                  <select
+                    value={swapTargetNik}
+                    onChange={(e) => setSwapTargetNik(e.target.value)}
+                    className="w-full mt-1.5 rounded-lg border border-input bg-background px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-ring"
+                  >
+                    <option value="">Pilih karyawan...</option>
+                    {availableEmployees.map((e) => (
+                      <option key={e.nik} value={e.nik}>
+                        {e.nama} — {e.posisi}
+                      </option>
+                    ))}
+                  </select>
+                </div>
+
+                <div>
+                  <label className="text-sm font-semibold text-foreground">Tanggal yang ditukar</label>
+                  <select
+                    value={swapTargetDate}
+                    onChange={(e) => setSwapTargetDate(e.target.value)}
+                    className="w-full mt-1.5 rounded-lg border border-input bg-background px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-ring"
+                  >
+                    {dateColumns.map((col) => (
+                      <option key={col.key} value={col.key}>
+                        {format(new Date(col.key), "EEEE, dd MMM yyyy", { locale: localeId })}
+                      </option>
+                    ))}
+                  </select>
+                </div>
+
+                {swapTargetNik && swapTargetDate && (
+                  <div className="rounded-lg bg-muted/50 p-3 flex items-center gap-3">
+                    <div className="flex-1 text-center">
+                      <p className="text-[10px] text-muted-foreground">Shift Anda</p>
+                      <span className="inline-block mt-1 px-2.5 py-0.5 rounded bg-primary/15 text-primary text-sm font-bold">
+                        {swapModal.shift}
+                      </span>
+                    </div>
+                    <ArrowLeftRight className="h-4 w-4 text-muted-foreground shrink-0" />
+                    <div className="flex-1 text-center">
+                      <p className="text-[10px] text-muted-foreground">Shift {target?.nama.split(" ")[0]}</p>
+                      <span className="inline-block mt-1 px-2.5 py-0.5 rounded bg-primary/15 text-primary text-sm font-bold">
+                        {targetShift || "-"}
+                      </span>
+                    </div>
+                  </div>
+                )}
+
+                {swapTargetNik && targetShift === "OFF" && (
+                  <div className="flex items-center gap-2 text-xs text-yellow-700 bg-yellow-50 rounded-lg px-3 py-2">
+                    ⚠️ Karyawan tersebut sedang OFF di tanggal yang dipilih
+                  </div>
+                )}
+
+                <div>
+                  <label className="text-sm font-semibold text-foreground">Alasan tukar</label>
+                  <textarea
+                    value={swapReason}
+                    onChange={(e) => setSwapReason(e.target.value)}
+                    placeholder="Jelaskan alasan tukar jadwal..."
+                    className="w-full mt-1.5 rounded-lg border border-input bg-background px-3 py-2 text-sm resize-none focus:outline-none focus:ring-2 focus:ring-ring"
+                    rows={2}
+                  />
+                </div>
+
+                <button
+                  disabled={!swapTargetNik || !swapReason.trim()}
+                  onClick={() => {
+                    if (!requestor || !target) return;
+                    addRequest({
+                      requestorNik: swapModal.nik,
+                      requestorName: requestor.nama,
+                      requestorDate: swapModal.date,
+                      requestorShift: swapModal.shift,
+                      targetNik: swapTargetNik,
+                      targetName: target.nama,
+                      targetDate: swapTargetDate,
+                      targetShift: targetShift || "",
+                      reason: swapReason,
+                    });
+                    setPendingCount(getPendingCount());
+                    toast({ title: "Request tukar jadwal terkirim!", description: "Menunggu approval dari planner." });
+                    setSwapModal(null);
+                  }}
+                  className="w-full py-2.5 rounded-lg bg-primary text-primary-foreground text-sm font-semibold hover:opacity-90 transition-opacity disabled:opacity-40 disabled:cursor-not-allowed"
+                >
+                  Kirim Request
+                </button>
+              </div>
+            );
+          })()}
+        </DialogContent>
+      </Dialog>
     </div>
   );
 };

@@ -10,6 +10,7 @@ import DailyReportList from "./pages/DailyReportList";
 import DailyReport from "./pages/DailyReport";
 import PatrolSubmitted from "./pages/PatrolSubmitted";
 import Scheduling from "./pages/Scheduling";
+import ShiftSwapApprovals from "./pages/ShiftSwapApprovals";
 import TenantList from "./pages/TenantList";
 import TenantCreation from "./pages/TenantCreation";
 import NotFound from "./pages/NotFound";
@@ -55,6 +56,7 @@ const App = () => (
             <Route path="/master-data/tenants/create" element={<TenantCreation />} />
             <Route path="/master-data/tenants/:tenantId" element={<TenantDetail />} />
             <Route path="/sign-in" element={<SignIn />} />
+            <Route path="/scheduling/approvals" element={<ShiftSwapApprovals />} />
             <Route path="*" element={<NotFound />} />
           </Routes>
         </AppLayout>
